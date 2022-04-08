@@ -1,0 +1,33 @@
+{
+  "version": 2,
+  "dgSpecHash": "rkdTlohrd+Fh0nRwWKA5OlyHf2Yq/YCGqUteE+b7YGNwaG+nv2VbALEnartLtY9kPzeXOKn9UBeMUlBFVIlmKA==",
+  "success": true,
+  "projectFilePath": "D:\\Code\\C_Sharp\\_Repos\\Photogram\\Core\\Rendering\\Rendering\\Rendering.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Jack\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\microsoft.netcore.targets\\1.1.0\\microsoft.netcore.targets.1.1.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\microsoft.win32.systemevents\\6.0.0\\microsoft.win32.systemevents.6.0.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\opentk\\4.7.1\\opentk.4.7.1.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\opentk.compute\\4.7.1\\opentk.compute.4.7.1.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\opentk.core\\4.7.1\\opentk.core.4.7.1.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\opentk.graphics\\4.7.1\\opentk.graphics.4.7.1.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\opentk.input\\4.7.1\\opentk.input.4.7.1.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\opentk.mathematics\\4.7.1\\opentk.mathematics.4.7.1.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\opentk.openal\\4.7.1\\opentk.openal.4.7.1.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\opentk.redist.glfw\\3.3.0-pre20200830200122\\opentk.redist.glfw.3.3.0-pre20200830200122.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\opentk.windowing.common\\4.7.1\\opentk.windowing.common.4.7.1.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\opentk.windowing.desktop\\4.7.1\\opentk.windowing.desktop.4.7.1.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\opentk.windowing.graphicslibraryframework\\4.7.1\\opentk.windowing.graphicslibraryframework.4.7.1.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\system.drawing.common\\6.0.0\\system.drawing.common.6.0.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\system.globalization\\4.3.0\\system.globalization.4.3.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\system.io\\4.3.0\\system.io.4.3.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\system.reflection\\4.3.0\\system.reflection.4.3.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\system.reflection.primitives\\4.3.0\\system.reflection.primitives.4.3.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\system.resources.resourcemanager\\4.3.0\\system.resources.resourcemanager.4.3.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\system.runtime\\4.3.0\\system.runtime.4.3.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\5.0.0\\system.runtime.compilerservices.unsafe.5.0.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\system.text.encoding\\4.3.0\\system.text.encoding.4.3.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\system.threading.tasks\\4.3.0\\system.threading.tasks.4.3.0.nupkg.sha512"
+  ],
+  "logs": []
+}

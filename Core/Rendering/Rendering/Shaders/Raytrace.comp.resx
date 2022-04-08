@@ -1,0 +1,163 @@
+﻿#version 430
+
+struct Material
+{
+	vec4 Color4;
+	float reflectivity;
+};
+
+
+
+struct Sphere
+{
+	vec4 sphere_origin;
+	float sphere_radius;
+	int material_index;
+};
+
+struct Ray 
+{
+	vec4 origin;
+	vec4 direction;
+	vec4 Color4;
+	ivec2 pixel;
+	float near_point_cutoff;
+	float far_point_cutoff;
+	bool is_reflection;
+};
+Ray new_ray()
+{
+	return Ray(vec4(0, 0, 0, 0), vec4(0, 0, 0, 0), vec4(0, 0, 0, 0), ivec2(0, 0), 0, 0, false);
+}
+
+struct Hit
+{
+	vec4 coordinate;
+	vec4 normal;
+	bool is_hit;
+	float depth;
+	int hit_material_index;
+};
+Hit new_hit()
+{
+	return Hit(vec4(0, 0, 0, 0), vec4(0, 0, 0, 0), false, 100000, 0);
+}
+
+
+
+layout(rgba32f, binding = 0) uniform image2D img_output;
+layout(std430, binding = 1) buffer rays_ssbo { Ray rays[]; };
+layout(std430, binding = 2) buffer materials_ssbo { Material materials[]; };
+layout(std430, binding = 3) buffer spheres_ssbo { Sphere spheres[]; };
+
+
+uniform int u_width;
+uniform int u_height;
+uniform int u_sphere_count;
+
+
+
+vec4 draw_hit(Hit h, Ray r);
+
+Hit collide_scene(Ray r);
+Hit collide_sphere(Ray r, Sphere s);
+Ray generate_reflection_ray(Ray r, Hit h, vec4 col);
+
+
+
+layout(local_size_x = 1, local_size_y = 1) in;
+void main() 
+{
+	uint i = gl_GlobalInvocationID.x + (gl_GlobalInvocationID.y * u_width);
+	Ray ray = rays[i];
+		
+	for (uint n = 0; n <= 6; n++)
+	{
+		Hit nearest_hit = collide_scene(ray);
+		
+		if (nearest_hit.is_hit)
+		{
+			vec4 col = draw_hit(nearest_hit, ray);
+			ray = generate_reflection_ray(ray, nearest_hit, col);
+		}
+		else 
+		{
+			break;
+		}
+	}
+}
+
+vec4 draw_hit(Hit h, Ray r)
+{
+	Material material = materials[h.hit_material_index];
+	
+	vec4 Color4 = material.Color4;
+	if (r.is_reflection)
+	{
+		Color4 *= material.reflectivity;
+		Color4 += (1 - material.reflectivity) * r.Color4;
+	}
+
+	imageStore(img_output, r.pixel, Color4);
+	return Color4;
+}
+
+Hit collide_scene(Ray r)
+{
+	Hit nearestHit = new_hit();
+
+	for (uint j = 0; j < u_sphere_count; j++)
+	{
+		Hit h = collide_sphere(r, spheres[j]);
+
+		if (h.is_hit)
+		{
+			if (h.depth < nearestHit.depth)
+			{
+				nearestHit = h;
+			}
+		}
+	}
+
+	return nearestHit;
+}
+
+Hit collide_sphere(Ray r, Sphere s)
+{
+	Hit h = new_hit();
+
+	vec4 a = r.origin - s.sphere_origin;
+	float b = dot(r.direction, a);
+	if (b > 0)
+	{
+		float del = (b * b) - (dot(a, a) - (s.sphere_radius * s.sphere_radius));
+
+		if (del >= 0)
+		{
+			h.is_hit = true;
+			h.depth = b - sqrt(del);
+
+			h.coordinate = r.origin - (r.direction * h.depth);
+			h.normal = normalize(h.coordinate - s.sphere_origin);
+			h.hit_material_index = s.material_index;
+		}
+	}
+
+	return h;
+}
+
+
+Ray generate_reflection_ray(Ray r, Hit h, vec4 col)
+{
+	Ray reflection = new_ray();
+	reflection.origin = h.coordinate;
+	reflection.direction = r.direction - (2 * dot(r.direction, h.normal) * h.normal);
+
+	reflection.pixel = r.pixel;
+	reflection.near_point_cutoff = r.near_point_cutoff;
+	reflection.far_point_cutoff = r.far_point_cutoff;
+	reflection.is_reflection = true;
+	reflection.Color4 = col;
+
+	return reflection;
+}
