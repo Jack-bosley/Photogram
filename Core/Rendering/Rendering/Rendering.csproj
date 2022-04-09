@@ -13,6 +13,7 @@
     <EmbeddedResource Remove="Shaders\default.frag.resx" />
     <EmbeddedResource Remove="Shaders\default.vert.resx" />
     <EmbeddedResource Remove="Shaders\EmpiricalProjection.comp.resx" />
+    <EmbeddedResource Remove="Shaders\EmpiricalProjectionDisplay.comp.resx" />
     <EmbeddedResource Remove="Shaders\Raytrace.comp.resx" />
   </ItemGroup>
 

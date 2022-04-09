@@ -33,9 +33,9 @@ namespace Application
             mainCamera.BindToPanel(displayPanel);
 
             spheres = new Sphere[3];
-            spheres[0] = new Sphere() { origin = new Vector4(-5, 0, -2, 0), radius = 1, material = 0, };
-            spheres[1] = new Sphere() { origin = new Vector4(-5, 0, 2, 0), radius = 1, material = 1, };
-            spheres[2] = new Sphere() { origin = new Vector4(5, 0, 0, 0), radius = 1, material = 2, };
+            spheres[0] = new Sphere() { origin = new Vector4(-1, -2, 5, 0), radius = 1, material = 0, };
+            spheres[1] = new Sphere() { origin = new Vector4(-1, 1, 5, 0), radius = 1, material = 1, };
+            spheres[2] = new Sphere() { origin = new Vector4(0, 0, -5, 0), radius = 1, material = 2, };
 
             materials = new RenderMaterial[3];
             materials[0] = new RenderMaterial() { reflectivity = 0.3f, color = new Color4(1.0f, 0.5f, 0.4f, 0), };
@@ -53,7 +53,6 @@ namespace Application
             mainCamera.RenderView(renderArgs);
 
             displayPanel.Draw();
-
         }
 
 
@@ -71,6 +70,8 @@ namespace Application
 
                 isSceneChanged = false;
             }
+
+            Console.WriteLine(mainCamera.Transform.GetDirectionVector());
 
             RayCameraRenderArgs args = new RayCameraRenderArgs()
             {

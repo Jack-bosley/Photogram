@@ -103,11 +103,62 @@ namespace Core.Rendering.Properties {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to .
+        ///   Looks up a localized string similar to #version 430
+        ///
+        ///struct Point
+        ///{
+        ///    vec4 world_position;
+        ///    vec2 screen_position;
+        ///    vec2 pixel_position;
+        ///};
+        ///
+        ///layout(std430, binding = 0) buffer points_ssbo { Point points[]; };
+        ///
+        ///uniform vec2 u_focal_lengths;
+        ///uniform vec3 u_radial_distortion;
+        ///uniform vec2 u_tangential_distortion;
+        ///
+        ///uniform mat3 u_camera_rotation;
+        ///uniform vec3 u_camera_position;
+        ///
+        ///uniform ivec2 u_output_resolution;
+        ///
+        ///
+        ///layout(local_size_x = 1, local_size_y = 1) in;
+        ///void main()
+        ///{
+        ///    Point point = points[gl_GlobalInvocation [rest of string was truncated]&quot;;.
         /// </summary>
         public static string EmpiricalProjection_comp {
             get {
                 return ResourceManager.GetString("EmpiricalProjection_comp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to #version 430
+        ///
+        ///struct Point
+        ///{
+        ///    vec4 world_position;
+        ///    vec2 screen_position;
+        ///    vec2 pixel_position;
+        ///};
+        ///
+        ///layout(rgba32f, binding = 0) uniform image2D img_output;
+        ///layout(std430, binding = 1) buffer points_output_ssbo { Point points[]; };
+        ///
+        ///
+        ///layout(local_size_x = 1, local_size_y = 1) in;
+        ///void main()
+        ///{
+        ///    Point point = points[gl_GlobalInvocationID.x];
+        ///	imageStore(img_output, point.pixel_position, vec4(1, 0, 0, 0));
+        ///}.
+        /// </summary>
+        public static string EmpiricalProjectionDisplay_comp {
+            get {
+                return ResourceManager.GetString("EmpiricalProjectionDisplay_comp", resourceCulture);
             }
         }
         

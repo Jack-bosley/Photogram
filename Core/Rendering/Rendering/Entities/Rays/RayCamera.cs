@@ -16,13 +16,15 @@ namespace Core.Rendering.Entities.Rays
     /// </summary>
     public class RayCamera : Camera<RayCameraRenderArgs>
     {
+        protected ComputeShader? computeShader;
+
         int raySSBO;
         private Ray[]? rayBundle;
 
-        public RayCamera(int width, int height) : base(width, height, Properties.Resources.Raytrace_comp)
+        public RayCamera(int width, int height) : base(width, height)
         {
-            transform = new Transform();
             InitializeRays();
+            InitializeShader();
 
             OnPreRender += UpdateRayPositions;
             OnRender += RenderView;
@@ -33,20 +35,31 @@ namespace Core.Rendering.Entities.Rays
         }
         public new void Dispose()
         {
+            computeShader?.Dispose();
             base.Dispose();
+        }
+        private void InitializeShader()
+        {
+            computeShader = new ComputeShader();
+            computeShader.Open(Properties.Resources.Raytrace_comp);
+            computeShader.Compile();
+
+            OpenTKException.ThrowIfErrors();
         }
 
         private void InitializeRays()
         {
+            raySSBO = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, raySSBO);
+            GL.BufferData(BufferTarget.ShaderStorageBuffer, resolutionWidth * resolutionHeight * Ray.SIZE, rayBundle, BufferUsageHint.DynamicDraw);
+            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
+
             rayBundle = new Ray[resolutionWidth * resolutionHeight];
             for (int x = 0; x < resolutionWidth; x++)
                 for (int y = 0; y < resolutionHeight; y++)
                     rayBundle[x + (y * resolutionWidth)] = new Ray();
 
-            raySSBO = GL.GenBuffer();
-            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, raySSBO);
-            GL.BufferData(BufferTarget.ShaderStorageBuffer, resolutionWidth * resolutionHeight * Ray.SIZE, rayBundle, BufferUsageHint.DynamicDraw);
-            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
+            UpdateRayPositions();
 
             OpenTKException.ThrowIfErrors();
         }
@@ -60,11 +73,13 @@ namespace Core.Rendering.Entities.Rays
             if (rayBundle == null)
                 InitializeRays();
 
-            float distanceToCentre = 1 / MathF.Tan(fov / 2); 
-            Vector3 centreOfView = transform.position + (distanceToCentre * transform.rotation);
+            Vector3 directionVector = transform.GetDirectionVector();
 
-            Vector3 horizontal = Vector3.Cross(transform.rotation, new Vector3(0, 1, 0)).Normalized();
-            Vector3 vertical = -Vector3.Cross(transform.rotation, horizontal).Normalized() * resolutionHeight / resolutionWidth;
+            float distanceToCentre = 1 / MathF.Tan(fov / 2); 
+            Vector3 centreOfView = transform.position + (distanceToCentre * directionVector);
+
+            Vector3 horizontal = Vector3.Cross(directionVector, new Vector3(0, 1, 0)).Normalized();
+            Vector3 vertical = -Vector3.Cross(directionVector, horizontal).Normalized() * resolutionHeight / resolutionWidth;
 
             for (int x = 0; x < resolutionWidth; x++)
             {
@@ -74,7 +89,7 @@ namespace Core.Rendering.Entities.Rays
 
                     float tx = (2 * x / (float)(resolutionWidth - 1)) - 1;
                     float ty = (2 * y / (float)(resolutionHeight - 1)) - 1;
-                    Vector3 targetPoint = centreOfView + (tx * horizontal) + (ty * vertical);
+                    Vector3 targetPoint = centreOfView - (tx * horizontal) - (ty * vertical);
                     Vector3 direction = (targetPoint - transform.position).Normalized();
 
                     rayBundle![i].origin = new Vector4(transform.position);
@@ -91,7 +106,7 @@ namespace Core.Rendering.Entities.Rays
             GL.BufferData(BufferTarget.ShaderStorageBuffer, resolutionWidth * resolutionHeight * Ray.SIZE, rayBundle, BufferUsageHint.DynamicDraw);
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
         }
-        private void RenderView(RayCameraRenderArgs args)
+        private new void RenderView(RayCameraRenderArgs args)
         {
             // Check that an output texture is bound
             if (texture == null)

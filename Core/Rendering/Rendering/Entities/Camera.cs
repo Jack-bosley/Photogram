@@ -15,7 +15,6 @@ namespace Core.Rendering.Entities
         where T : CameraRenderArgs
     {
         protected Texture? texture;
-        protected ComputeShader? computeShader;
 
         protected int resolutionWidth;
         protected int resolutionHeight;
@@ -25,7 +24,7 @@ namespace Core.Rendering.Entities
         protected float fov;
 
         protected Transform transform;
-        private Transform previousRenderTransform;
+        private Transform? previousRenderTransform;
 
         public delegate void PreRenderHandler();
         public PreRenderHandler? OnPreRender;
@@ -33,11 +32,13 @@ namespace Core.Rendering.Entities
         public delegate void RenderHandler(T args);
         public RenderHandler? OnRender;
 
-        protected Camera(int width, int height, string computeShaderSource)
+        protected Camera(int width, int height)
         {
+            transform = new Transform();
+            previousRenderTransform = null;
+
             resolutionWidth = width;
             resolutionHeight = height;
-            InitializeShader(computeShaderSource);
 
             nearPointDistance = 0;
             farPointDistance = 10000;
@@ -49,22 +50,13 @@ namespace Core.Rendering.Entities
         }
         public void Dispose()
         {
-            computeShader?.Dispose();
             GC.SuppressFinalize(this);
         }
 
-        private void InitializeShader(string source)
-        {
-            computeShader = new ComputeShader();
-            computeShader.Open(source);
-            computeShader.Compile();
-
-            OpenTKException.ThrowIfErrors();
-        }
 
 
-        public bool IsMoved => transform.position != previousRenderTransform.position || transform.rotation != previousRenderTransform.rotation;
-
+        public bool IsMoved => previousRenderTransform == null || transform.position != previousRenderTransform?.position || transform.rotation != previousRenderTransform?.rotation;
+        public Transform Transform => transform;
 
         public void BindToPanel(DisplayPanel panel)
         {

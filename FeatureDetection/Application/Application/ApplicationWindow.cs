@@ -57,7 +57,7 @@ namespace Application
             base.OnRenderFrame(args);
 
             DateTime frameEnd = DateTime.Now;
-            Console.WriteLine($"FPS = {1.0f / (frameEnd - frameStart).TotalSeconds}");
+            //Console.WriteLine($"FPS = {1.0f / (frameEnd - frameStart).TotalSeconds}");
         }
 
         protected override void OnUpdateFrame(FrameEventArgs args)
