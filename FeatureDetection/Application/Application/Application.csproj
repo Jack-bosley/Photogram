@@ -7,4 +7,20 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Application\**" />
+    <EmbeddedResource Remove="Application\**" />
+    <None Remove="Application\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenTK" Version="4.7.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Rendering">
+      <HintPath>..\..\..\Assemblies\Debug\net6.0\Rendering.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>

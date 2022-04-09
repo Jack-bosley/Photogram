@@ -103,6 +103,15 @@ namespace Core.Rendering.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string EmpiricalProjection_comp {
+            get {
+                return ResourceManager.GetString("EmpiricalProjection_comp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to #version 430
         ///
         ///struct Material

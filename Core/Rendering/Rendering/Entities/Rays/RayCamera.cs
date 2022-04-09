@@ -11,42 +11,37 @@ using Core.Rendering.ErrorHandling;
 
 namespace Core.Rendering.Entities.Rays
 {
-    public class RayCamera : IDisposable
+    /// <summary>
+    /// Sphere-only raytraced renderer for point cloud rendering
+    /// </summary>
+    public class RayCamera : Camera<RayCameraRenderArgs>
     {
-        private int resolutionWidth;
-        private int resolutionHeight;
-        private float nearPointDistance = 0;
-        private float farPointDistance = 10000;
-
-        private Texture? texture;
-
-        public Transform transform;
-        public float fov;
-
         int raySSBO;
-        private Ray[] rayBundle;
+        private Ray[]? rayBundle;
 
-        ComputeShader computeShader;
-
-        bool isCameraMoved = true;
-
-
-        public RayCamera(int width, int height)
+        public RayCamera(int width, int height) : base(width, height, Properties.Resources.Raytrace_comp)
         {
-            resolutionWidth = width;
-            resolutionHeight = height;
-
             transform = new Transform();
-            fov = MathF.PI / 2;
+            InitializeRays();
 
+            OnPreRender += UpdateRayPositions;
+            OnRender += RenderView;
+        }
+        ~RayCamera()
+        {
+            Dispose();
+        }
+        public new void Dispose()
+        {
+            base.Dispose();
+        }
+
+        private void InitializeRays()
+        {
             rayBundle = new Ray[resolutionWidth * resolutionHeight];
             for (int x = 0; x < resolutionWidth; x++)
                 for (int y = 0; y < resolutionHeight; y++)
                     rayBundle[x + (y * resolutionWidth)] = new Ray();
-
-            computeShader = new ComputeShader();
-            computeShader.Open(Properties.Resources.Raytrace_comp);
-            computeShader.Compile();
 
             raySSBO = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, raySSBO);
@@ -55,33 +50,16 @@ namespace Core.Rendering.Entities.Rays
 
             OpenTKException.ThrowIfErrors();
         }
-        ~RayCamera()
-        {
-            Dispose();
-        }
-        public void Dispose()
-        {
-            computeShader.Dispose();
-        }
 
-        public void BindToPanel(DisplayPanel panel)
-        {
-            texture = panel.viewTex;
-            texture.LoadTexture(resolutionWidth, resolutionHeight);
-            texture.InvalidateBuffers();
-            texture.Update(true);
-        }
 
-        public void BindToTexture(Texture outputTexture)
+        private void UpdateRayPositions()
         {
-            texture = outputTexture;
-            texture.LoadTexture(resolutionWidth, resolutionHeight);
-            texture.InvalidateBuffers();
-            texture.Update(true);
-        }
+            if (!IsMoved)
+                return;
 
-        public void UpdateRayPositions()
-        {
+            if (rayBundle == null)
+                InitializeRays();
+
             float distanceToCentre = 1 / MathF.Tan(fov / 2); 
             Vector3 centreOfView = transform.position + (distanceToCentre * transform.rotation);
 
@@ -99,39 +77,38 @@ namespace Core.Rendering.Entities.Rays
                     Vector3 targetPoint = centreOfView + (tx * horizontal) + (ty * vertical);
                     Vector3 direction = (targetPoint - transform.position).Normalized();
 
-                    rayBundle[i].origin = new Vector4(transform.position);
-                    rayBundle[i].direction = new Vector4(direction);
-                    rayBundle[i].pixel = new Vector2i(x, y);
+                    rayBundle![i].origin = new Vector4(transform.position);
+                    rayBundle![i].direction = new Vector4(direction);
+                    rayBundle![i].pixel = new Vector2i(x, y);
 
-                    rayBundle[i].nearPointCutoff = nearPointDistance;
-                    rayBundle[i].farPointCutoff = farPointDistance;
-                    rayBundle[i].isReflection = false;
+                    rayBundle![i].nearPointCutoff = nearPointDistance;
+                    rayBundle![i].farPointCutoff = farPointDistance;
+                    rayBundle![i].isReflection = false;
                 }
             }
 
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, raySSBO);
             GL.BufferData(BufferTarget.ShaderStorageBuffer, resolutionWidth * resolutionHeight * Ray.SIZE, rayBundle, BufferUsageHint.DynamicDraw);
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
-
-            isCameraMoved = false;
         }
-
-        public void RenderView(int spheresSSBO, int materialsSSBO, int spheresCount)
+        private void RenderView(RayCameraRenderArgs args)
         {
             // Check that an output texture is bound
             if (texture == null)
                 return;
 
-            if (isCameraMoved)
-                UpdateRayPositions();
+            // Init shader if not already
+            if (computeShader == null)
+                return;
+
 
             texture.Bind(TextureUnit.Texture0);
             GL.BindImageTexture(0, texture, 0, false, 0, TextureAccess.WriteOnly, SizedInternalFormat.Rgba8);
 
-            computeShader.UseProgram();
+            computeShader!.UseProgram();
             GL.Uniform1(GL.GetUniformLocation(computeShader, "u_width"), resolutionWidth);
             GL.Uniform1(GL.GetUniformLocation(computeShader, "u_height"), resolutionHeight);
-            GL.Uniform1(GL.GetUniformLocation(computeShader, "u_sphere_count"), spheresCount);
+            GL.Uniform1(GL.GetUniformLocation(computeShader, "u_sphere_count"), args.spheresCount);
 
             int raysblockIndex = GL.GetProgramResourceIndex(computeShader, ProgramInterface.ShaderStorageBlock, "rays_ssbo");
             GL.ShaderStorageBlockBinding(computeShader, raysblockIndex, 1);
@@ -139,17 +116,23 @@ namespace Core.Rendering.Entities.Rays
 
             int spheresblockIndex = GL.GetProgramResourceIndex(computeShader, ProgramInterface.ShaderStorageBlock, "spheres_ssbo");
             GL.ShaderStorageBlockBinding(computeShader, spheresblockIndex, 2);
-            GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 2, spheresSSBO);
+            GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 2, args.spheresSSBO);
 
             int materialsblockIndex = GL.GetProgramResourceIndex(computeShader, ProgramInterface.ShaderStorageBlock, "materials_ssbo");
             GL.ShaderStorageBlockBinding(computeShader, materialsblockIndex, 3);
-            GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 3, materialsSSBO);
-
+            GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 3, args.materialsSSBO);
 
             OpenTKException.ThrowIfErrors();
 
             GL.DispatchCompute(resolutionWidth / 1, resolutionHeight / 1, 1);
             GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
         }
+    }
+
+    public class RayCameraRenderArgs : CameraRenderArgs
+    {
+        public int spheresSSBO;
+        public int materialsSSBO;
+        public int spheresCount;
     }
 }

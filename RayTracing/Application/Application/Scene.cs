@@ -49,27 +49,37 @@ namespace Application
 
         public void DrawMainCamera()
         {
-            if (isSceneChanged)
-                BufferSceneData();
-
-            mainCamera.RenderView(spheresSSBO, materialSSBO, spheres.Length);
+            RayCameraRenderArgs renderArgs = GetRenderArgs();
+            mainCamera.RenderView(renderArgs);
 
             displayPanel.Draw();
 
         }
 
 
-        private void BufferSceneData()
+        private RayCameraRenderArgs GetRenderArgs()
         {
-            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, spheresSSBO);
-            GL.BufferData(BufferTarget.ShaderStorageBuffer, spheres.Length * Sphere.SIZE, spheres, BufferUsageHint.DynamicDraw);
+            if (isSceneChanged)
+            {
+                GL.BindBuffer(BufferTarget.ShaderStorageBuffer, spheresSSBO);
+                GL.BufferData(BufferTarget.ShaderStorageBuffer, spheres.Length * Sphere.SIZE, spheres, BufferUsageHint.DynamicDraw);
 
-            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, materialSSBO);
-            GL.BufferData(BufferTarget.ShaderStorageBuffer, materials.Length * RenderMaterial.SIZE, materials, BufferUsageHint.StaticDraw);
+                GL.BindBuffer(BufferTarget.ShaderStorageBuffer, materialSSBO);
+                GL.BufferData(BufferTarget.ShaderStorageBuffer, materials.Length * RenderMaterial.SIZE, materials, BufferUsageHint.StaticDraw);
 
-            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
+                GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
 
-            isSceneChanged = false;
+                isSceneChanged = false;
+            }
+
+            RayCameraRenderArgs args = new RayCameraRenderArgs()
+            {
+                materialsSSBO = materialSSBO,
+                spheresSSBO = spheresSSBO,
+                spheresCount = spheres.Length,
+            };
+
+            return args;
         }
     }
 }
