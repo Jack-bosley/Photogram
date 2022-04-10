@@ -18,14 +18,56 @@ namespace Core.Photogrammetry
         private List<Frame> Frames { get; set; }
         private LabelledPoint[] PointGuesses { get; set; }
 
+        private int PointGuessesSSBO;
+
+
         public BundleAdjuster()
         {
             Frames = new List<Frame>();
             PointGuesses = new LabelledPoint[0];
         }
 
+
         public void AddFrames(IEnumerable<Frame> frame) => Frames.AddRange(frame);
         public void AddFrames(params Frame[] frame) => Frames.AddRange(frame);
+
+        public void SetStartingGuess(LabelledPoint[] startingGuess) => PointGuesses = startingGuess;
+
+
+        public unsafe void GenerateBuffers()
+        {
+            PointGuessesSSBO = GL.GenBuffer();
+            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, PointGuessesSSBO);
+            GL.BufferData(BufferTarget.ShaderStorageBuffer, PointGuesses.Length * sizeof(LabelledPoint), PointGuesses, BufferUsageHint.StaticDraw);
+            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
+
+            foreach (Frame frame in Frames)
+                frame.GenerateBuffers();
+        }
+
+        public void GetReprojectionError()
+        {
+            EmpCameraRenderArgs args = new EmpCameraRenderArgs()
+            {
+                pointsCount = PointGuesses.Length,
+                worldPointsSSBO = PointGuessesSSBO,
+            };
+
+            foreach (Frame frame in Frames)
+            {
+                args.screenPointsSSBO = frame.ImagePointSSBO;
+
+
+            }
+        }
+
+
+        public void Adjust()
+        {
+            EmpCamera camera = new EmpCamera(0, 0);
+
+        }
+
 
         public unsafe static List<Frame> GenerateDummyData(EmpCamera camera, Transform[] cameraPositions, LabelledPoint[] truePointPositions, bool provideCameraOrientations = false)
         {
@@ -58,7 +100,7 @@ namespace Core.Photogrammetry
                 GL.BindBuffer(BufferTarget.ShaderStorageBuffer, args.screenPointsSSBO);
                 GL.GetBufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, args.pointsCount * sizeof(ScreenPoint), screenPoints);
 
-                result[i] = new Frame(camera.Resolution, screenPoints);
+                result[i] = new Frame(camera.cameraData.Resolution, screenPoints);
 
                 if (provideCameraOrientations)
                     result[i].CameraOrientation = camera.transform;
@@ -66,22 +108,22 @@ namespace Core.Photogrammetry
 
             return result;
         }
-
-        public void CreateDummyGuesses()
+        public static LabelledPoint[] CreateDummyGuesses(List<Frame> frames)
         {
             // Enumerate over all points, getting each ID uniquely
             HashSet<int> pointIdSet = new HashSet<int>();
-            foreach (Frame frame in Frames)
+            foreach (Frame frame in frames)
             {
                 foreach (int pointId in frame.FramePointImage.GetPointIDs())
                     pointIdSet.Add(pointId);
             }
 
             int i = 0;
-            PointGuesses = new LabelledPoint[pointIdSet.Count];
+            LabelledPoint[] pointGuesses = new LabelledPoint[pointIdSet.Count];
             foreach (int pointId in pointIdSet)
-                PointGuesses[i++] = new LabelledPoint() { pointID = pointId, };
-        }
+                pointGuesses[i++] = new LabelledPoint() { pointID = pointId, };
 
+            return pointGuesses;
+        }
     }
 }

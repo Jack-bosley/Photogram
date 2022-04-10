@@ -14,17 +14,31 @@ namespace Core.Rendering.Entities.Rays
     /// <summary>
     /// Sphere-only raytraced renderer for point cloud rendering
     /// </summary>
-    public class RayCamera : Camera<RayCameraRenderArgs>
+    public class RayCamera : Camera<RayCameraRenderArgs, RayCameraData>
     {
         protected ComputeShader? computeShader;
 
         int raySSBO;
         private Ray[]? rayBundle;
 
-        public RayCamera(int width, int height) : base(width, height)
+        public RayCamera(int width, int height)
         {
-            InitializeRays();
             InitializeShader();
+
+            cameraData.Resolution = new Vector2i(width, height);
+            cameraData.NearPointCutoffDistance = 0;
+            cameraData.FarPointCutoffDistance = 10000;
+            cameraData.FOV = MathF.PI / 2;
+            InitializeRays();
+
+            OnPreRender += UpdateRayPositions;
+            OnRender += RenderView;
+        }
+        public RayCamera(RayCameraData rayCameraData)
+        {
+            InitializeShader();
+
+            cameraData = rayCameraData;
 
             OnPreRender += UpdateRayPositions;
             OnRender += RenderView;
@@ -51,13 +65,13 @@ namespace Core.Rendering.Entities.Rays
         {
             raySSBO = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, raySSBO);
-            GL.BufferData(BufferTarget.ShaderStorageBuffer, resolutionWidth * resolutionHeight * Ray.SIZE, rayBundle, BufferUsageHint.DynamicDraw);
+            GL.BufferData(BufferTarget.ShaderStorageBuffer, cameraData.Resolution.X * cameraData.Resolution.Y * Ray.SIZE, rayBundle, BufferUsageHint.DynamicDraw);
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
 
-            rayBundle = new Ray[resolutionWidth * resolutionHeight];
-            for (int x = 0; x < resolutionWidth; x++)
-                for (int y = 0; y < resolutionHeight; y++)
-                    rayBundle[x + (y * resolutionWidth)] = new Ray();
+            rayBundle = new Ray[cameraData.Resolution.X * cameraData.Resolution.Y];
+            for (int x = 0; x < cameraData.Resolution.X; x++)
+                for (int y = 0; y < cameraData.Resolution.Y; y++)
+                    rayBundle[x + (y * cameraData.Resolution.X)] = new Ray();
 
             UpdateRayPositions();
 
@@ -75,20 +89,20 @@ namespace Core.Rendering.Entities.Rays
 
             Vector3 directionVector = transform.GetDirectionVector();
 
-            float distanceToCentre = 1 / MathF.Tan(fov / 2); 
+            float distanceToCentre = 1 / MathF.Tan(cameraData.FOV / 2); 
             Vector3 centreOfView = transform.position + (distanceToCentre * directionVector);
 
             Vector3 horizontal = Vector3.Cross(directionVector, new Vector3(0, 1, 0)).Normalized();
-            Vector3 vertical = -Vector3.Cross(directionVector, horizontal).Normalized() * resolutionHeight / resolutionWidth;
+            Vector3 vertical = -Vector3.Cross(directionVector, horizontal).Normalized() * cameraData.Resolution.Y / cameraData.Resolution.X;
 
-            for (int x = 0; x < resolutionWidth; x++)
+            for (int x = 0; x < cameraData.Resolution.X; x++)
             {
-                for (int y = 0; y < resolutionHeight; y++)
+                for (int y = 0; y < cameraData.Resolution.Y; y++)
                 {
-                    int i = x + (y * resolutionWidth);
+                    int i = x + (y * cameraData.Resolution.X);
 
-                    float tx = (2 * x / (float)(resolutionWidth - 1)) - 1;
-                    float ty = (2 * y / (float)(resolutionHeight - 1)) - 1;
+                    float tx = (2 * x / (float)(cameraData.Resolution.X - 1)) - 1;
+                    float ty = (2 * y / (float)(cameraData.Resolution.Y - 1)) - 1;
                     Vector3 targetPoint = centreOfView - (tx * horizontal) - (ty * vertical);
                     Vector3 direction = (targetPoint - transform.position).Normalized();
 
@@ -96,14 +110,14 @@ namespace Core.Rendering.Entities.Rays
                     rayBundle![i].direction = new Vector4(direction);
                     rayBundle![i].pixel = new Vector2i(x, y);
 
-                    rayBundle![i].nearPointCutoff = nearPointDistance;
-                    rayBundle![i].farPointCutoff = farPointDistance;
+                    rayBundle![i].nearPointCutoff = cameraData.NearPointCutoffDistance;
+                    rayBundle![i].farPointCutoff = cameraData.FarPointCutoffDistance;
                     rayBundle![i].isReflection = false;
                 }
             }
 
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, raySSBO);
-            GL.BufferData(BufferTarget.ShaderStorageBuffer, resolutionWidth * resolutionHeight * Ray.SIZE, rayBundle, BufferUsageHint.DynamicDraw);
+            GL.BufferData(BufferTarget.ShaderStorageBuffer, cameraData.Resolution.X * cameraData.Resolution.Y * Ray.SIZE, rayBundle, BufferUsageHint.DynamicDraw);
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
         }
         private new void RenderView(RayCameraRenderArgs args)
@@ -121,8 +135,8 @@ namespace Core.Rendering.Entities.Rays
             GL.BindImageTexture(0, texture, 0, false, 0, TextureAccess.WriteOnly, SizedInternalFormat.Rgba8);
 
             computeShader!.UseProgram();
-            GL.Uniform1(GL.GetUniformLocation(computeShader, "u_width"), resolutionWidth);
-            GL.Uniform1(GL.GetUniformLocation(computeShader, "u_height"), resolutionHeight);
+            GL.Uniform1(GL.GetUniformLocation(computeShader, "u_width"), cameraData.Resolution.X);
+            GL.Uniform1(GL.GetUniformLocation(computeShader, "u_height"), cameraData.Resolution.Y);
             GL.Uniform1(GL.GetUniformLocation(computeShader, "u_sphere_count"), args.spheresCount);
 
             int raysblockIndex = GL.GetProgramResourceIndex(computeShader, ProgramInterface.ShaderStorageBlock, "rays_ssbo");
@@ -139,7 +153,7 @@ namespace Core.Rendering.Entities.Rays
 
             OpenTKException.ThrowIfErrors();
 
-            GL.DispatchCompute(resolutionWidth / 1, resolutionHeight / 1, 1);
+            GL.DispatchCompute(cameraData.Resolution.X / 1, cameraData.Resolution.Y / 1, 1);
             GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
         }
     }

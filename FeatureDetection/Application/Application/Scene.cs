@@ -31,8 +31,8 @@ namespace Application
             displayPanel = new DisplayPanel();
 
             camera = new EmpCamera(1920, 1080);
-            camera.focalLength.Y = 16 / 9.0f;
-            camera.radialDistortionCoefficient = (0, 0f, 0f);
+            camera.cameraData.FocalLength = new Vector2(1, 16 / 9.0f);
+            camera.cameraData.RadialDistortionCoefficient = (0, 0f, 0f);
 
             camera.BindToPanel(displayPanel);
 
@@ -51,15 +51,21 @@ namespace Application
 
         }
 
-        public void PerformBundleAdjustment()
+        public (List<Frame> frames, LabelledPoint[] startingGuess) GetDummyData()
         {
+            Console.WriteLine("Started: Create Dummy Frames");
+
             int numFrames = 100;
-            int numPoints = 50;
+            int numPoints = 1000;
             (float min, float max) xRange = (-0.5f, 0.5f);
             (float min, float max) yRange = (-0.5f, 0.5f);
             (float min, float max) zRange = (-0.5f, 0.5f);
 
+            float cameraOrbitRadius = 5;
+
             // Set camera positions for dummy frames
+            DateTime transformsStart = DateTime.Now;
+
             Transform[] dummyCameraTransforms = new Transform[numFrames];
             for (int i = 0; i < numFrames; i++)
             {
@@ -67,12 +73,17 @@ namespace Application
 
                 dummyCameraTransforms[i] = new Transform()
                 {
-                    position = new Vector3(MathF.Sin(t), 0, MathF.Cos(t)),
+                    position = new Vector3(MathF.Sin(t), 0, MathF.Cos(t)) * cameraOrbitRadius,
                     rotation = new Vector3(0, MathF.PI + t, 0),
                 };
             }
 
+            Console.WriteLine($"\tComplete: Create Dummy Transforms {(DateTime.Now - transformsStart).TotalSeconds}");
+
+
             // Set points to view in camera
+            DateTime pointsStart = DateTime.Now;
+
             Random random = new Random();
             static float Map(float a, (float min, float max) range) => (a * range.min) + ((1 - a) * range.max);
 
@@ -90,19 +101,37 @@ namespace Application
                 };
             }
 
-            // Generate the frames from the dummy data
+            Console.WriteLine($"\tComplete: Create Dummy Points {(DateTime.Now - pointsStart).TotalSeconds}");
+
+
+            // Generate the frames and a starting guess from the dummy data 
+            DateTime imagesStart = DateTime.Now;
+
             List<Frame> frames = BundleAdjuster.GenerateDummyData(camera, dummyCameraTransforms, dummyPoints, true);
+            LabelledPoint[] startingGuess = BundleAdjuster.CreateDummyGuesses(frames);
+
+            Console.WriteLine($"\tComplete: Create Dummy Frames + Starting Guess {(DateTime.Now - imagesStart).TotalSeconds}");
 
             
+            return (frames, startingGuess);
+        }
+
+        public void PerformBundleAdjustment()
+        {
+            (List<Frame> frames, LabelledPoint[] startingGuess) dummyData = GetDummyData();
+
             // Create a bundle adjuster for the dummy data
             BundleAdjuster bundleAdjuster = new BundleAdjuster();
-            bundleAdjuster.AddFrames(frames);
-            bundleAdjuster.CreateDummyGuesses();
+            bundleAdjuster.AddFrames(dummyData.frames);
+            bundleAdjuster.SetStartingGuess(dummyData.startingGuess);
 
+
+            bundleAdjuster.GenerateBuffers();
 
 
             isRendered = true;
         }
+
 
         public void DrawMainCamera()
         {
@@ -111,7 +140,6 @@ namespace Application
 
             displayPanel.Draw();
         }
-
 
         private EmpCameraRenderArgs BufferSceneData()
         {

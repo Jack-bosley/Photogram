@@ -11,17 +11,13 @@ using Core.Rendering.ErrorHandling;
 
 namespace Core.Rendering.Entities
 {
-    public abstract class Camera<T> : IDisposable
+    public abstract class Camera<T, U> : IDisposable
         where T : CameraRenderArgs
+        where U : ICameraData
     {
         protected Texture? texture;
 
-        protected int resolutionWidth;
-        protected int resolutionHeight;
-
-        protected float nearPointDistance;
-        protected float farPointDistance;
-        protected float fov;
+        public U? cameraData;
 
         public Transform transform;
         private Transform? previousRenderTransform;
@@ -32,17 +28,10 @@ namespace Core.Rendering.Entities
         public delegate void RenderHandler(T args);
         public RenderHandler? OnRender;
 
-        protected Camera(int width, int height)
+        protected Camera()
         {
             transform = new Transform();
             previousRenderTransform = null;
-
-            resolutionWidth = width;
-            resolutionHeight = height;
-
-            nearPointDistance = 0;
-            farPointDistance = 10000;
-            fov = MathF.PI / 2;
         }
         ~Camera()
         {
@@ -56,20 +45,25 @@ namespace Core.Rendering.Entities
 
 
         public bool IsMoved => previousRenderTransform == null || transform.position != previousRenderTransform?.position || transform.rotation != previousRenderTransform?.rotation;
-        public Vector2i Resolution => new Vector2i(resolutionWidth, resolutionHeight);
 
         public void BindToPanel(DisplayPanel panel)
         {
+            if (cameraData == null)
+                return;
+
             texture = panel.viewTex;
-            texture.LoadTexture(resolutionWidth, resolutionHeight);
+            texture.LoadTexture(cameraData.Resolution.X, cameraData.Resolution.Y);
             texture.InvalidateBuffers();
             texture.Update(true);
         }
 
         public void BindToTexture(Texture outputTexture)
         {
+            if (cameraData == null)
+                return;
+
             texture = outputTexture;
-            texture.LoadTexture(resolutionWidth, resolutionHeight);
+            texture.LoadTexture(cameraData.Resolution.X, cameraData.Resolution.Y);
             texture.InvalidateBuffers();
             texture.Update(true);
         }

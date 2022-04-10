@@ -71,7 +71,7 @@ namespace Application
                 isSceneChanged = false;
             }
 
-            Console.WriteLine(mainCamera.Transform.GetDirectionVector());
+            Console.WriteLine(mainCamera.transform.GetDirectionVector());
 
             RayCameraRenderArgs args = new RayCameraRenderArgs()
             {

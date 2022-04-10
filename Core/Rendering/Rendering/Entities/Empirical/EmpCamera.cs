@@ -14,29 +14,32 @@ namespace Core.Rendering.Entities.Empirical
     /// <summary>
     /// Acts as a point primitive only vertex shader, with empirical camera adjustments
     /// </summary>
-    public unsafe class EmpCamera : Camera<EmpCameraRenderArgs>
+    public unsafe class EmpCamera : Camera<EmpCameraRenderArgs, EmpCameraData>
     {
         protected ComputeShader? clearTextureShader;
         protected ComputeShader? projectionShader;
         protected ComputeShader? displayShader;
 
-        // x, y focal lengths
-        public Vector2 focalLength;
-
-        // r^0, r^1, r^2 order radial distortion coefficients
-        public (float r0, float r1, float r2) radialDistortionCoefficient;
-        // x, y tangential distortions
-        public Vector2 tangentialDistortionCoefficient;
-
         public Matrix3 cameraRotationMatrix;
 
-        public EmpCamera(int width, int height) : base(width, height)
+        public EmpCamera(int width, int height) : base()
         {
             InitializeShaders();
 
-            focalLength = new Vector2(1, 1);
-            radialDistortionCoefficient = (0, 0, 0);
-            tangentialDistortionCoefficient = new Vector2(0, 0);
+            cameraData.Resolution = new Vector2i(width, height);
+            cameraData.FOV = MathF.PI / 2;
+            cameraData.FocalLength = new Vector2(1, 1);
+            cameraData.RadialDistortionCoefficient = (0, 0, 0);
+            cameraData.TangentialDistortionCoefficient = new Vector2(0, 0);
+
+            OnPreRender += GetRotationMatrix;
+            OnRender += RenderView;
+        }
+        public EmpCamera(EmpCameraData empCameraData) : base()
+        {
+            InitializeShaders();
+
+            cameraData = empCameraData;
 
             OnPreRender += GetRotationMatrix;
             OnRender += RenderView;
@@ -94,19 +97,19 @@ namespace Core.Rendering.Entities.Empirical
                 GL.Uniform4(GL.GetUniformLocation(projectionShader, "u_clear_colour"), 0, 0, 0, 0);
                 OpenTKException.ThrowIfErrors();
 
-                GL.DispatchCompute((resolutionWidth / 32) + 1, (resolutionHeight / 32) + 1, 1);
+                GL.DispatchCompute((cameraData.Resolution.X / 32) + 1, (cameraData.Resolution.Y / 32) + 1, 1);
                 GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
                 OpenTKException.ThrowIfErrors();
             }
 
             // Project the points into the camera plane
             projectionShader!.UseProgram();
-            GL.Uniform2(GL.GetUniformLocation(projectionShader, "u_focal_lengths"), focalLength);
-            GL.Uniform3(GL.GetUniformLocation(projectionShader, "u_radial_distortion"), radialDistortionCoefficient);
-            GL.Uniform2(GL.GetUniformLocation(projectionShader, "u_tangential_distortion"), tangentialDistortionCoefficient);
+            GL.Uniform2(GL.GetUniformLocation(projectionShader, "u_focal_lengths"), cameraData.FocalLength);
+            GL.Uniform3(GL.GetUniformLocation(projectionShader, "u_radial_distortion"), cameraData.RadialDistortionCoefficient);
+            GL.Uniform2(GL.GetUniformLocation(projectionShader, "u_tangential_distortion"), cameraData.TangentialDistortionCoefficient);
             GL.UniformMatrix3(GL.GetUniformLocation(projectionShader, "u_camera_rotation"), false, ref cameraRotationMatrix);
             GL.Uniform3(GL.GetUniformLocation(projectionShader, "u_camera_position"), transform.position);
-            GL.Uniform2(GL.GetUniformLocation(projectionShader, "u_output_resolution"), resolutionWidth, resolutionHeight);
+            GL.Uniform2(GL.GetUniformLocation(projectionShader, "u_output_resolution"), cameraData.Resolution.X, cameraData.Resolution.Y);
 
             int worldPointsBlockIndex = GL.GetProgramResourceIndex(projectionShader, ProgramInterface.ShaderStorageBlock, "world_points_ssbo");
             GL.ShaderStorageBlockBinding(projectionShader, worldPointsBlockIndex, 1);
@@ -139,12 +142,11 @@ namespace Core.Rendering.Entities.Empirical
 
         public void Resize(int width, int height)
         {
-            resolutionWidth = width;
-            resolutionHeight = height;
+            cameraData.Resolution = new Vector2i(width, height);
 
             if (texture != null)
             {
-                texture.LoadTexture(resolutionWidth, resolutionHeight);
+                texture.LoadTexture(width, height);
                 texture.InvalidateBuffers();
                 texture.Update(true);
             }
