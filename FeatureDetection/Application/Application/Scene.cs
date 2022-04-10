@@ -14,11 +14,16 @@ namespace Application
 {
     public class Scene
     {
+        float t = 0;
+
         public DisplayPanel displayPanel;
         public EmpCamera camera;
 
-        public Point[] points;
-        public int pointsSSBO;
+        public Vector4[] worldPoints;
+        public int worldPointsSSBO;
+
+        public ScreenPoint[] screenPoints;
+        public int screenPointsSSBO;
 
         public Scene()
         {
@@ -26,21 +31,36 @@ namespace Application
 
             camera = new EmpCamera(1920, 1080);
             camera.focalLength.Y = 16 / 9.0f;
-            camera.radialDistortionCoefficient = (10f, 0.2f, 0.1f);
-            
+            camera.radialDistortionCoefficient = (0, 0f, 0f);
+
             camera.BindToPanel(displayPanel);
 
-            points = new Point[3];
-            points[0] = new Point() { worldPosition = new Vector4(0   , 0   , 1, 0) };
-            points[1] = new Point() { worldPosition = new Vector4(0.1f, 0   , 1, 0) };
-            points[2] = new Point() { worldPosition = new Vector4(0   , 0.1f, 1, 0) };
+            worldPointsSSBO = GL.GenBuffer();
+            screenPointsSSBO = GL.GenBuffer();
 
-            pointsSSBO = GL.GenBuffer();
+            worldPoints = new Vector4[3];
+            worldPoints[0] = new Vector4(0   , 0   , 0, 0);
+            worldPoints[1] = new Vector4(0.1f, -0.1f, 0, 0);
+            worldPoints[2] = new Vector4(0   , 0.1f, 0, 0);
+
+            screenPoints = new ScreenPoint[3];
+            screenPoints[0] = new ScreenPoint();
+            screenPoints[1] = new ScreenPoint();
+            screenPoints[2] = new ScreenPoint();
+
         }
 
+        public void PerformBundleAdjustment()
+        {
+
+        }
 
         public void DrawMainCamera()
         {
+            t += Application.timer.DeltaTime;
+            camera.transform.position = new Vector3(MathF.Sin(t), 0, MathF.Cos(t));
+            camera.transform.rotation = new Vector3(0, MathF.PI + t, 0);
+
             EmpCameraRenderArgs args = BufferSceneData();
             camera.RenderView(args);
 
@@ -48,19 +68,22 @@ namespace Application
         }
 
 
-        private EmpCameraRenderArgs BufferSceneData()
+        private unsafe EmpCameraRenderArgs BufferSceneData()
         {
-            Console.WriteLine(camera.cameraRotationMatrix);
+            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, worldPointsSSBO);
+            GL.BufferData(BufferTarget.ShaderStorageBuffer, worldPoints.Length * sizeof(Vector4), worldPoints, BufferUsageHint.DynamicDraw);
 
-            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, pointsSSBO);
-            GL.BufferData(BufferTarget.ShaderStorageBuffer, points.Length * Point.SIZE, points, BufferUsageHint.StaticDraw);
+            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, screenPointsSSBO);
+            GL.BufferData(BufferTarget.ShaderStorageBuffer, screenPoints.Length * sizeof(ScreenPoint), screenPoints, BufferUsageHint.DynamicDraw);
 
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
 
             EmpCameraRenderArgs args = new EmpCameraRenderArgs()
             {
-                pointsSSBO = pointsSSBO,
-                pointsCount = points.Length,
+                pointsCount = worldPoints.Length,
+
+                worldPointsSSBO = worldPointsSSBO,
+                screenPointsSSBO = screenPointsSSBO,
             };
             return args;
         }

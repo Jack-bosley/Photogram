@@ -10,38 +10,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <EmbeddedResource Remove="Shaders\default.frag.resx" />
-    <EmbeddedResource Remove="Shaders\default.vert.resx" />
-    <EmbeddedResource Remove="Shaders\EmpiricalProjection.comp.resx" />
-    <EmbeddedResource Remove="Shaders\EmpiricalProjectionDisplay.comp.resx" />
-    <EmbeddedResource Remove="Shaders\Raytrace.comp.resx" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Remove="Shaders\default.frag" />
-    <None Remove="Shaders\default.vert" />
-    <None Remove="Shaders\Raytrace.comp" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Shaders\default.frag.resx" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Shaders\default.vert.resx" />
-    <Resource Include="Shaders\Raytrace.comp.resx" />
+    <Compile Remove="Shaders\**" />
+    <EmbeddedResource Remove="Shaders\**" />
+    <None Remove="Shaders\**" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.7.1" />
     <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
     <PackageReference Include="System.Resources.ResourceManager" Version="4.3.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Resource Include="Shaders\default.frag" />
-    <Resource Include="Shaders\default.vert" />
-    <Resource Include="Shaders\Raytrace.comp" />
   </ItemGroup>
 
   <ItemGroup>

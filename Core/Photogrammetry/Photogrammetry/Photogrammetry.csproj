@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <BaseOutputPath>D:\Code\C_Sharp\_Repos\Photogram\Assemblies</BaseOutputPath>
+    <RootNamespace>Core.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="OpenTK" Version="4.7.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Rendering">
+      <HintPath>..\..\..\Assemblies\Debug\net6.0\Rendering.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

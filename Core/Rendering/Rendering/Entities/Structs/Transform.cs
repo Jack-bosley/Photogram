@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -8,10 +9,16 @@ using OpenTK.Mathematics;
 
 namespace Core.Rendering.Entities
 {
+    [StructLayout(LayoutKind.Explicit, Size = 12 * sizeof(float))]
     public struct Transform
     {
+        [FieldOffset(0 * sizeof(float))]
         public Vector3 position;
+
+        [FieldOffset(4 * sizeof(float))]
         public Vector3 rotation;
+
+        [FieldOffset(8 * sizeof(float))]
         public Vector3 scale;
 
         public Transform()

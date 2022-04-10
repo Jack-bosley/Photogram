@@ -1,4 +1,3 @@
-D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\obj\Debug\net6.0\Application.csproj.AssemblyReference.cache
 D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\obj\Debug\net6.0\Application.GeneratedMSBuildEditorConfig.editorconfig
 D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\obj\Debug\net6.0\Application.AssemblyInfoInputs.cache
 D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\obj\Debug\net6.0\Application.AssemblyInfo.cs
@@ -29,3 +28,6 @@ D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\obj\De
 D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\obj\Debug\net6.0\ref\Application.dll
 D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\obj\Debug\net6.0\Application.pdb
 D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\obj\Debug\net6.0\Application.genruntimeconfig.cache
+D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\bin\Debug\net6.0\Photogrammetry.dll
+D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\bin\Debug\net6.0\Photogrammetry.pdb
+D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\obj\Debug\net6.0\Application.csproj.AssemblyReference.cache

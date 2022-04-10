@@ -61,6 +61,15 @@ namespace Core.Rendering.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to .
+        /// </summary>
+        public static string clear_texture_comp {
+            get {
+                return ResourceManager.GetString("clear_texture_comp", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to 
         ///#version 330
         ///
@@ -109,7 +118,8 @@ namespace Core.Rendering.Properties {
         ///{
         ///    vec4 world_position;
         ///    vec2 screen_position;
-        ///    vec2 pixel_position;
+        ///    ivec2 pixel_position;
+        ///    bool is_visible;
         ///};
         ///
         ///layout(std430, binding = 0) buffer points_ssbo { Point points[]; };
@@ -127,11 +137,11 @@ namespace Core.Rendering.Properties {
         ///layout(local_size_x = 1, local_size_y = 1) in;
         ///void main()
         ///{
-        ///    Point point = points[gl_GlobalInvocation [rest of string was truncated]&quot;;.
+        ///    Point point = poi [rest of string was truncated]&quot;;.
         /// </summary>
-        public static string EmpiricalProjection_comp {
+        public static string empirical_projection_comp {
             get {
-                return ResourceManager.GetString("EmpiricalProjection_comp", resourceCulture);
+                return ResourceManager.GetString("empirical_projection_comp", resourceCulture);
             }
         }
         
@@ -142,23 +152,28 @@ namespace Core.Rendering.Properties {
         ///{
         ///    vec4 world_position;
         ///    vec2 screen_position;
-        ///    vec2 pixel_position;
+        ///    ivec2 pixel_position;
+        ///    bool is_visible;
         ///};
         ///
         ///layout(rgba32f, binding = 0) uniform image2D img_output;
-        ///layout(std430, binding = 1) buffer points_output_ssbo { Point points[]; };
+        ///layout(std430, binding = 1) buffer points_ssbo { Point points[]; };
         ///
         ///
         ///layout(local_size_x = 1, local_size_y = 1) in;
         ///void main()
         ///{
         ///    Point point = points[gl_GlobalInvocationID.x];
-        ///	imageStore(img_output, point.pixel_position, vec4(1, 0, 0, 0));
-        ///}.
+        ///
+        ///    if (point.is_visible)
+        ///    {
+        ///        for (int i = -10; i &lt;= 10; i++)
+        ///        {
+        ///            for (int j = -10; j &lt;= 1 [rest of string was truncated]&quot;;.
         /// </summary>
-        public static string EmpiricalProjectionDisplay_comp {
+        public static string empirical_projection_display_comp {
             get {
-                return ResourceManager.GetString("EmpiricalProjectionDisplay_comp", resourceCulture);
+                return ResourceManager.GetString("empirical_projection_display_comp", resourceCulture);
             }
         }
         
@@ -201,9 +216,9 @@ namespace Core.Rendering.Properties {
         ///	vec4 normal;
         ///	bool is_hit;        /// [rest of string was truncated]&quot;;.
         /// </summary>
-        public static string Raytrace_comp {
+        public static string raytrace_comp {
             get {
-                return ResourceManager.GetString("Raytrace.comp", resourceCulture);
+                return ResourceManager.GetString("raytrace.comp", resourceCulture);
             }
         }
     }

@@ -8,9 +8,10 @@ namespace Application
 {
     public static class Application
     {
-        public static ApplicationWindow? window;
+        public static ApplicationWindow window;
+        public static Timer timer;
 
-        public static void Main(string[] args)
+        static Application()
         {
             GameWindowSettings gameWindowSettings = new GameWindowSettings()
             {
@@ -25,8 +26,14 @@ namespace Application
                 Title = "RayTrace",
                 Profile = ContextProfile.Compatability,
             };
-
             window = new ApplicationWindow(gameWindowSettings, nativeWindowSettings);
+
+            timer = new Timer();
+        }
+
+
+        public static void Main(string[] args)
+        {
             window.Run();
         }
     }

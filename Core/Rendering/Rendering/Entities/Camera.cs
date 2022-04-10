@@ -23,7 +23,7 @@ namespace Core.Rendering.Entities
         protected float farPointDistance;
         protected float fov;
 
-        protected Transform transform;
+        public Transform transform;
         private Transform? previousRenderTransform;
 
         public delegate void PreRenderHandler();
@@ -56,7 +56,6 @@ namespace Core.Rendering.Entities
 
 
         public bool IsMoved => previousRenderTransform == null || transform.position != previousRenderTransform?.position || transform.rotation != previousRenderTransform?.rotation;
-        public Transform Transform => transform;
 
         public void BindToPanel(DisplayPanel panel)
         {

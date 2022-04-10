@@ -41,7 +41,7 @@ namespace Core.Rendering.Entities.Rays
         private void InitializeShader()
         {
             computeShader = new ComputeShader();
-            computeShader.Open(Properties.Resources.Raytrace_comp);
+            computeShader.Open(Properties.Resources.raytrace_comp);
             computeShader.Compile();
 
             OpenTKException.ThrowIfErrors();

@@ -6,17 +6,12 @@ using System.Threading.Tasks;
 
 using OpenTK.Mathematics;
 
-namespace Core.Rendering.Entities.Empirical
+namespace Core.Photogrammetry
 {
-    public struct Point
+    public struct ImagePoint
     {
-        public const int SIZE = 12 * sizeof(float);
-
-        public Vector4 worldPosition;
         public Vector2 screenPosition;
         public Vector2i pixelPosition;
-        public bool isVisible;
-
-        private Vector3 padding;
+        public int pointID;
     }
 }

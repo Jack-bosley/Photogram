@@ -14,8 +14,9 @@ namespace Core.Rendering.Entities.Empirical
     /// <summary>
     /// Acts as a point primitive only vertex shader, with empirical camera adjustments
     /// </summary>
-    public class EmpCamera : Camera<EmpCameraRenderArgs>
+    public unsafe class EmpCamera : Camera<EmpCameraRenderArgs>
     {
+        protected ComputeShader? clearTextureShader;
         protected ComputeShader? projectionShader;
         protected ComputeShader? displayShader;
 
@@ -50,17 +51,19 @@ namespace Core.Rendering.Entities.Empirical
         }
         private void InitializeShaders()
         {
-            projectionShader = new ComputeShader();
-            projectionShader.Open(Properties.Resources.EmpiricalProjection_comp);
-            projectionShader.Compile();
-
+            clearTextureShader = new ComputeShader();
+            clearTextureShader.Open(Properties.Resources.clear_texture_comp);
+            clearTextureShader.Compile();
             OpenTKException.ThrowIfErrors();
 
+            projectionShader = new ComputeShader();
+            projectionShader.Open(Properties.Resources.empirical_projection_comp);
+            projectionShader.Compile();
+            OpenTKException.ThrowIfErrors();
 
             displayShader = new ComputeShader();
-            displayShader.Open(Properties.Resources.EmpiricalProjectionDisplay_comp);
+            displayShader.Open(Properties.Resources.empirical_projection_display_comp);
             displayShader.Compile();
-
             OpenTKException.ThrowIfErrors();
         }
 
@@ -74,14 +77,29 @@ namespace Core.Rendering.Entities.Empirical
 
         private new void RenderView(EmpCameraRenderArgs args)
         {
-            // Check that an output texture is bound
-            if (texture == null)
-                return;
+            // Check if an output texture is wanted
+            bool renderToTexture = texture != null;
 
             // Init shader if not already
             if (projectionShader == null || displayShader == null)
                 return;
 
+            if (renderToTexture)
+            {
+                texture!.Bind(TextureUnit.Texture0);
+                GL.BindImageTexture(0, texture, 0, false, 0, TextureAccess.WriteOnly, SizedInternalFormat.Rgba8);
+
+                // Clear the texture
+                clearTextureShader!.UseProgram();
+                GL.Uniform4(GL.GetUniformLocation(projectionShader, "u_clear_colour"), 0, 0, 0, 0);
+                OpenTKException.ThrowIfErrors();
+
+                GL.DispatchCompute((resolutionWidth / 32) + 1, (resolutionHeight / 32) + 1, 1);
+                GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
+                OpenTKException.ThrowIfErrors();
+            }
+
+            // Project the points into the camera plane
             projectionShader!.UseProgram();
             GL.Uniform2(GL.GetUniformLocation(projectionShader, "u_focal_lengths"), focalLength);
             GL.Uniform3(GL.GetUniformLocation(projectionShader, "u_radial_distortion"), radialDistortionCoefficient);
@@ -90,31 +108,54 @@ namespace Core.Rendering.Entities.Empirical
             GL.Uniform3(GL.GetUniformLocation(projectionShader, "u_camera_position"), transform.position);
             GL.Uniform2(GL.GetUniformLocation(projectionShader, "u_output_resolution"), resolutionWidth, resolutionHeight);
 
-            int pointsBlockIndex = GL.GetProgramResourceIndex(projectionShader, ProgramInterface.ShaderStorageBlock, "points_ssbo");
-            GL.ShaderStorageBlockBinding(projectionShader, pointsBlockIndex, 1);
-            GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 1, args.pointsSSBO);
+            int worldPointsBlockIndex = GL.GetProgramResourceIndex(projectionShader, ProgramInterface.ShaderStorageBlock, "world_points_ssbo");
+            GL.ShaderStorageBlockBinding(projectionShader, worldPointsBlockIndex, 1);
+            GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 1, args.worldPointsSSBO);
+
+            int screenPointsBlockIndex = GL.GetProgramResourceIndex(projectionShader, ProgramInterface.ShaderStorageBlock, "screen_points_ssbo");
+            GL.ShaderStorageBlockBinding(projectionShader, screenPointsBlockIndex, 2);
+            GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 2, args.screenPointsSSBO);
 
             OpenTKException.ThrowIfErrors();
 
             GL.DispatchCompute(args.pointsCount / 1, 1, 1);
-            GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
+            GL.MemoryBarrier(MemoryBarrierFlags.ShaderStorageBarrierBit);
+            OpenTKException.ThrowIfErrors();
 
-            displayShader!.UseProgram();
-            texture.Bind(TextureUnit.Texture0);
-            GL.BindImageTexture(0, texture, 0, false, 0, TextureAccess.WriteOnly, SizedInternalFormat.Rgba8);
+            if (renderToTexture)
+            {
+                // Draw points to texture for debugging
+                displayShader!.UseProgram();
+                int displayScreenPointsBlockIndex = GL.GetProgramResourceIndex(displayShader, ProgramInterface.ShaderStorageBlock, "screen_points_ssbo");
+                GL.ShaderStorageBlockBinding(displayShader, displayScreenPointsBlockIndex, 2);
+                GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 2, args.screenPointsSSBO);
+                OpenTKException.ThrowIfErrors();
 
-            int displayPointsBlockIndex = GL.GetProgramResourceIndex(displayShader, ProgramInterface.ShaderStorageBlock, "points_ssbo");
-            GL.ShaderStorageBlockBinding(displayShader, displayPointsBlockIndex, 1);
-            GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 1, args.pointsSSBO);
+                GL.DispatchCompute(args.pointsCount / 1, 1, 1);
+                GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
+                OpenTKException.ThrowIfErrors();
+            }
+        }
 
-            GL.DispatchCompute(args.pointsCount / 1, 1, 1);
-            GL.MemoryBarrier(MemoryBarrierFlags.ShaderImageAccessBarrierBit);
+        public void Resize(int width, int height)
+        {
+            resolutionWidth = width;
+            resolutionHeight = height;
+
+            if (texture != null)
+            {
+                texture.LoadTexture(resolutionWidth, resolutionHeight);
+                texture.InvalidateBuffers();
+                texture.Update(true);
+            }
         }
     }
 
     public class EmpCameraRenderArgs : CameraRenderArgs
     {
-        public int pointsSSBO;
         public int pointsCount;
+
+        public int worldPointsSSBO;
+        public int screenPointsSSBO;
     }
 }

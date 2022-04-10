@@ -1,21 +1,20 @@
-#version 430
+#version 440
 
-struct Point
+struct ScreenPoint
 {
-    vec4 world_position;
     vec2 screen_position;
     ivec2 pixel_position;
     bool is_visible;
 };
 
 layout(rgba32f, binding = 0) uniform image2D img_output;
-layout(std430, binding = 1) buffer points_ssbo { Point points[]; };
+layout(std430, binding = 1) buffer screen_points_ssbo { ScreenPoint screen_points[]; };
 
 
 layout(local_size_x = 1, local_size_y = 1) in;
 void main()
 {
-    Point point = points[gl_GlobalInvocationID.x];
+    ScreenPoint point = screen_points[gl_GlobalInvocationID.x];
 
     if (point.is_visible)
     {
@@ -23,7 +22,7 @@ void main()
         {
             for (int j = -10; j <= 10; j++)
             {
-                imageStore(img_output, point.pixel_position + ivec2(i, j), vec4(1, 0, 0, 0));
+                imageStore(img_output, point.pixel_position + ivec2(i, j), vec4(1, 1, 1, 0));
             }
         }
     }
