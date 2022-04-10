@@ -5,6 +5,7 @@ struct ScreenPoint
     vec2 screen_position;
     ivec2 pixel_position;
     bool is_visible;
+    int point_id;
 };
 
 layout(rgba32f, binding = 0) uniform image2D img_output;

@@ -6,7 +6,12 @@
     <Nullable>enable</Nullable>
     <BaseOutputPath>D:\Code\C_Sharp\_Repos\Photogram\Assemblies</BaseOutputPath>
     <RootNamespace>Core.$(MSBuildProjectName.Replace(" ", "_"))</RootNamespace>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="BundleAdjuster.cs~RF10d162b.TMP" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="OpenTK" Version="4.7.1" />

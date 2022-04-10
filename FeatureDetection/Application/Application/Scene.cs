@@ -9,21 +9,22 @@ using OpenTK.Graphics.OpenGL;
 
 using Core.Rendering.Entities;
 using Core.Rendering.Entities.Empirical;
+using Core.Photogrammetry;
 
 namespace Application
 {
-    public class Scene
+    public unsafe class Scene
     {
-        float t = 0;
-
         public DisplayPanel displayPanel;
         public EmpCamera camera;
 
-        public Vector4[] worldPoints;
+        public LabelledPoint[] worldPoints;
         public int worldPointsSSBO;
 
         public ScreenPoint[] screenPoints;
         public int screenPointsSSBO;
+
+        bool isRendered = false;
 
         public Scene()
         {
@@ -38,10 +39,10 @@ namespace Application
             worldPointsSSBO = GL.GenBuffer();
             screenPointsSSBO = GL.GenBuffer();
 
-            worldPoints = new Vector4[3];
-            worldPoints[0] = new Vector4(0   , 0   , 0, 0);
-            worldPoints[1] = new Vector4(0.1f, -0.1f, 0, 0);
-            worldPoints[2] = new Vector4(0   , 0.1f, 0, 0);
+            worldPoints = new LabelledPoint[3];
+            worldPoints[0] = new LabelledPoint() { pointID = 0, position = new Vector3(   0,    0, 0)};
+            worldPoints[1] = new LabelledPoint() { pointID = 1, position = new Vector3(0.1f,    0, 0)};
+            worldPoints[2] = new LabelledPoint() { pointID = 2, position = new Vector3(   0, 0.1f, 0)};
 
             screenPoints = new ScreenPoint[3];
             screenPoints[0] = new ScreenPoint();
@@ -52,26 +53,70 @@ namespace Application
 
         public void PerformBundleAdjustment()
         {
+            int numFrames = 100;
+            int numPoints = 50;
+            (float min, float max) xRange = (-0.5f, 0.5f);
+            (float min, float max) yRange = (-0.5f, 0.5f);
+            (float min, float max) zRange = (-0.5f, 0.5f);
 
+            // Set camera positions for dummy frames
+            Transform[] dummyCameraTransforms = new Transform[numFrames];
+            for (int i = 0; i < numFrames; i++)
+            {
+                float t = (float)i / (numFrames - 1) * 2 * MathF.PI;
+
+                dummyCameraTransforms[i] = new Transform()
+                {
+                    position = new Vector3(MathF.Sin(t), 0, MathF.Cos(t)),
+                    rotation = new Vector3(0, MathF.PI + t, 0),
+                };
+            }
+
+            // Set points to view in camera
+            Random random = new Random();
+            static float Map(float a, (float min, float max) range) => (a * range.min) + ((1 - a) * range.max);
+
+            LabelledPoint[] dummyPoints = new LabelledPoint[numPoints];
+            for (int i = 0; i < numPoints; i++)
+            {
+                float xRand = random.NextSingle();
+                float yRand = random.NextSingle();
+                float zRand = random.NextSingle();
+
+                dummyPoints[i] = new LabelledPoint()
+                {
+                    pointID = i,
+                    position = new Vector3(Map(xRand, xRange), Map(yRand, yRange), Map(zRand, zRange)),
+                };
+            }
+
+            // Generate the frames from the dummy data
+            List<Frame> frames = BundleAdjuster.GenerateDummyData(camera, dummyCameraTransforms, dummyPoints, true);
+
+            
+            // Create a bundle adjuster for the dummy data
+            BundleAdjuster bundleAdjuster = new BundleAdjuster();
+            bundleAdjuster.AddFrames(frames);
+            bundleAdjuster.CreateDummyGuesses();
+
+
+
+            isRendered = true;
         }
 
         public void DrawMainCamera()
         {
-            t += Application.timer.DeltaTime;
-            camera.transform.position = new Vector3(MathF.Sin(t), 0, MathF.Cos(t));
-            camera.transform.rotation = new Vector3(0, MathF.PI + t, 0);
-
-            EmpCameraRenderArgs args = BufferSceneData();
-            camera.RenderView(args);
+            if (!isRendered)
+                PerformBundleAdjustment();
 
             displayPanel.Draw();
         }
 
 
-        private unsafe EmpCameraRenderArgs BufferSceneData()
+        private EmpCameraRenderArgs BufferSceneData()
         {
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, worldPointsSSBO);
-            GL.BufferData(BufferTarget.ShaderStorageBuffer, worldPoints.Length * sizeof(Vector4), worldPoints, BufferUsageHint.DynamicDraw);
+            GL.BufferData(BufferTarget.ShaderStorageBuffer, worldPoints.Length * sizeof(LabelledPoint), worldPoints, BufferUsageHint.DynamicDraw);
 
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, screenPointsSSBO);
             GL.BufferData(BufferTarget.ShaderStorageBuffer, screenPoints.Length * sizeof(ScreenPoint), screenPoints, BufferUsageHint.DynamicDraw);

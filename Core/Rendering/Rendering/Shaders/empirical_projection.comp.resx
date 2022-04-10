@@ -1,13 +1,19 @@
 #version 440
 
+struct LabelledWorldPoint
+{
+    vec3 world_position;
+    int point_id;
+};
 struct ScreenPoint
 {
     vec2 screen_position;
     ivec2 pixel_position;
     bool is_visible;
+    int point_id;
 };
 
-layout(std430, binding = 0) buffer world_points_ssbo { vec4 world_points[]; };
+layout(std430, binding = 0) buffer world_points_ssbo { LabelledWorldPoint world_points[]; };
 layout(std430, binding = 1) buffer screen_points_ssbo { ScreenPoint screen_points[]; };
 
 uniform vec2 u_focal_lengths;
@@ -27,8 +33,8 @@ void main()
     ScreenPoint screen_point = screen_points[gl_GlobalInvocationID.x];
 
     // Position relative to camera
-    vec4 world_point = world_points[gl_GlobalInvocationID.x];
-    vec3 pos_c = u_camera_rotation * (world_point.xyz - u_camera_position);
+    LabelledWorldPoint world_point = world_points[gl_GlobalInvocationID.x];
+    vec3 pos_c = u_camera_rotation * (world_point.world_position - u_camera_position);
 
     // If projection will be visible, project and apply distortions
     if (pos_c.z > 0)
@@ -37,36 +43,35 @@ void main()
         vec2 pos_c_p = vec2(u_focal_lengths.x * pos_c.x, u_focal_lengths.y * pos_c.y) / pos_c.z;
 
         // Distortions
-        if (false)
-        {
-            // Radial
-            float rad_dist_sq = dot(pos_c_p, pos_c_p);          // ^2
-            float rad_dist_qd = rad_dist_sq * rad_dist_sq;      // ^4
-            float rad_dist_sx = rad_dist_qd * rad_dist_sq;      // ^6
+        // Radial
+        float rad_dist_sq = dot(pos_c_p, pos_c_p);          // ^2
+        float rad_dist_qd = rad_dist_sq * rad_dist_sq;      // ^4
+        float rad_dist_sx = rad_dist_qd * rad_dist_sq;      // ^6
 
-            float r_distortion = (u_radial_distortion.x * rad_dist_sq) + 
-                                (u_radial_distortion.y * rad_dist_qd) +
-                                (u_radial_distortion.z * rad_dist_sx);
-            vec2 r_distortion_offset = r_distortion * pos_c_p;
+        float r_distortion = (u_radial_distortion.x * rad_dist_sq) + 
+                            (u_radial_distortion.y * rad_dist_qd) +
+                            (u_radial_distortion.z * rad_dist_sx);
+        vec2 r_distortion_offset = r_distortion * pos_c_p;
 
-            // Tangential
-            vec2 t_distortion_1 = 2 * pos_c_p.x * pos_c_p.y * u_tangential_distortion.yx;
-            vec2 t_distortion_2 = u_tangential_distortion.xy * rad_dist_sq;
-            vec2 t_distortion_3 = 2 * vec2(u_tangential_distortion.x * pos_c_p.x * pos_c_p.x, u_tangential_distortion.y * pos_c_p.y * pos_c_p.y);
+        // Tangential
+        vec2 t_distortion_1 = 2 * pos_c_p.x * pos_c_p.y * u_tangential_distortion.yx;
+        vec2 t_distortion_2 = u_tangential_distortion.xy * rad_dist_sq;
+        vec2 t_distortion_3 = 2 * vec2(u_tangential_distortion.x * pos_c_p.x * pos_c_p.x, u_tangential_distortion.y * pos_c_p.y * pos_c_p.y);
 
-            vec2 t_distortion = t_distortion_1 + t_distortion_2 + t_distortion_3;
+        vec2 t_distortion = t_distortion_1 + t_distortion_2 + t_distortion_3;
 
-            // Apply distortions
-            pos_c_p += (r_distortion_offset + t_distortion);
-        }
+        // Apply distortions
+        pos_c_p += (r_distortion_offset + t_distortion);
 
         // Set screen point according to projection
+        screen_point.point_id = world_point.point_id;
         screen_point.is_visible = true;
         screen_point.screen_position = pos_c_p;
         screen_point.pixel_position = ivec2(int((pos_c_p.x + 0.5) * u_output_resolution.x), int((pos_c_p.y + 0.5) * u_output_resolution.y));
     }
     else
     {
+        screen_point.point_id = world_point.point_id;
         screen_point.is_visible = false;
     }
 

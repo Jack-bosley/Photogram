@@ -9,16 +9,16 @@ using OpenTK.Mathematics;
 
 namespace Core.Rendering.Entities
 {
-    [StructLayout(LayoutKind.Explicit, Size = 12 * sizeof(float))]
+    [StructLayout(LayoutKind.Explicit, Size = 9 * sizeof(float))]
     public struct Transform
     {
         [FieldOffset(0 * sizeof(float))]
         public Vector3 position;
 
-        [FieldOffset(4 * sizeof(float))]
+        [FieldOffset(3 * sizeof(float))]
         public Vector3 rotation;
 
-        [FieldOffset(8 * sizeof(float))]
+        [FieldOffset(6 * sizeof(float))]
         public Vector3 scale;
 
         public Transform()

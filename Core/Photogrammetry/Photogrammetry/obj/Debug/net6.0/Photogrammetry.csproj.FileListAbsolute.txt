@@ -13,3 +13,5 @@ D:\Code\C_Sharp\_Repos\Photogram\Assemblies\Debug\net6.0\Photogrammetry.deps.jso
 D:\Code\C_Sharp\_Repos\Photogram\Assemblies\Debug\net6.0\Photogrammetry.dll
 D:\Code\C_Sharp\_Repos\Photogram\Assemblies\Debug\net6.0\ref\Photogrammetry.dll
 D:\Code\C_Sharp\_Repos\Photogram\Assemblies\Debug\net6.0\Photogrammetry.pdb
+D:\Code\C_Sharp\_Repos\Photogram\Core\Photogrammetry\Photogrammetry\obj\Debug\net6.0\Photogrammetry.csproj.AssemblyReference.cache
+D:\Code\C_Sharp\_Repos\Photogram\Core\Photogrammetry\Photogrammetry\obj\Debug\net6.0\Photogrammetry.csproj.CopyComplete

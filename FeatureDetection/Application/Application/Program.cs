@@ -23,7 +23,7 @@ namespace Application
                 StartFocused = true,
                 Size = new Vector2i(1920, 1080),
                 APIVersion = Version.Parse("4.3.0"),
-                Title = "RayTrace",
+                Title = "Bundle Adjustment",
                 Profile = ContextProfile.Compatability,
             };
             window = new ApplicationWindow(gameWindowSettings, nativeWindowSettings);

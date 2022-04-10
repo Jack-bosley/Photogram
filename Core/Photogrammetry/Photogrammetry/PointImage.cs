@@ -6,17 +6,25 @@ using System.Threading.Tasks;
 
 using OpenTK.Mathematics;
 
+using Core.Rendering.Entities;
+
 namespace Core.Photogrammetry
 {
     public class PointImage
     {
         public Vector2i Resulution { get; set; }
-        public ImagePoint[] ImagePoints { get; set; }
+        public ScreenPoint[] ImagePoints { get; set; }
 
-        public PointImage(Vector2i resulution, ImagePoint[] imagePoints)
+        public PointImage(Vector2i resulution, ScreenPoint[] imagePoints)
         {
             Resulution = resulution;
             ImagePoints = imagePoints;
+        }
+
+        public IEnumerable<int> GetPointIDs()
+        {
+            foreach (ScreenPoint point in ImagePoints)
+                yield return point.pointID;
         }
     }
 }

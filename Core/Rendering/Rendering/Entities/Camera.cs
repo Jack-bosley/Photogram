@@ -56,6 +56,7 @@ namespace Core.Rendering.Entities
 
 
         public bool IsMoved => previousRenderTransform == null || transform.position != previousRenderTransform?.position || transform.rotation != previousRenderTransform?.rotation;
+        public Vector2i Resolution => new Vector2i(resolutionWidth, resolutionHeight);
 
         public void BindToPanel(DisplayPanel panel)
         {
