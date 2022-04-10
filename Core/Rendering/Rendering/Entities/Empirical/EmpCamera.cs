@@ -43,6 +43,7 @@ namespace Core.Rendering.Entities.Empirical
 
             OnPreRender += GetRotationMatrix;
             OnRender += RenderView;
+            OnResize += Resize;
         }
         ~EmpCamera()
         {
@@ -140,13 +141,16 @@ namespace Core.Rendering.Entities.Empirical
             }
         }
 
-        public void Resize(int width, int height)
+        public void Resize(Vector2i newResolution)
         {
-            cameraData.Resolution = new Vector2i(width, height);
+            if (newResolution == cameraData.Resolution)
+                return;
+
+            cameraData.Resolution = new Vector2i(newResolution.X, newResolution.Y);
 
             if (texture != null)
             {
-                texture.LoadTexture(width, height);
+                texture.LoadTexture(newResolution.X, newResolution.Y);
                 texture.InvalidateBuffers();
                 texture.Update(true);
             }

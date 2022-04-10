@@ -53,9 +53,15 @@ namespace Core.Photogrammetry
                 worldPointsSSBO = PointGuessesSSBO,
             };
 
+            EmpCamera camera = new EmpCamera(0, 0);
             foreach (Frame frame in Frames)
             {
+                // Set frame specific data
+                camera.SetCameraData(frame.CameraData);
                 args.screenPointsSSBO = frame.ImagePointSSBO;
+
+                // 
+                camera.RenderView(args);
 
 
             }
@@ -101,9 +107,10 @@ namespace Core.Photogrammetry
                 GL.GetBufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, args.pointsCount * sizeof(ScreenPoint), screenPoints);
 
                 result[i] = new Frame(camera.cameraData.Resolution, screenPoints);
+                result[i].CameraData = camera.cameraData;
 
                 if (provideCameraOrientations)
-                    result[i].CameraOrientation = camera.transform;
+                    result[i].CameraTransform = camera.transform;
             }
 
             return result;

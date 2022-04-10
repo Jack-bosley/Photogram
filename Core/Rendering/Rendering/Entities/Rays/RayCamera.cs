@@ -120,6 +120,7 @@ namespace Core.Rendering.Entities.Rays
             GL.BufferData(BufferTarget.ShaderStorageBuffer, cameraData.Resolution.X * cameraData.Resolution.Y * Ray.SIZE, rayBundle, BufferUsageHint.DynamicDraw);
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
         }
+
         private new void RenderView(RayCameraRenderArgs args)
         {
             // Check that an output texture is bound

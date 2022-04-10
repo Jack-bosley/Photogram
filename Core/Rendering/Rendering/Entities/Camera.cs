@@ -28,6 +28,9 @@ namespace Core.Rendering.Entities
         public delegate void RenderHandler(T args);
         public RenderHandler? OnRender;
 
+        public delegate void ResizeHandler(Vector2i newResolution);
+        public ResizeHandler? OnResize;
+
         protected Camera()
         {
             transform = new Transform();
@@ -67,6 +70,17 @@ namespace Core.Rendering.Entities
             texture.InvalidateBuffers();
             texture.Update(true);
         }
+
+        public void SetCameraData(U newCameraData)
+        {
+            bool invokeResize = cameraData == null || (cameraData.Resolution != newCameraData.Resolution);
+
+            cameraData = newCameraData;
+
+            if (invokeResize)
+                OnResize?.Invoke(cameraData.Resolution);
+        }
+
 
         public void RenderView(T args)
         {

@@ -8,13 +8,16 @@ using OpenTK.Mathematics;
 using OpenTK.Graphics.OpenGL;
 
 using Core.Rendering.Entities;
+using Core.Rendering.Entities.Empirical;
 
 namespace Core.Photogrammetry
 {
     public class Frame
     {
         public PointImage FramePointImage { get; set; }
-        public Transform CameraOrientation { get; set; }
+
+        public Transform CameraTransform { get; set; }
+        public EmpCameraData CameraData { get; set; }
 
         public int ImagePointSSBO { get; private set; }
 
