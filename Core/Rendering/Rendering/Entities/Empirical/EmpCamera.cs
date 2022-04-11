@@ -56,17 +56,17 @@ namespace Core.Rendering.Entities.Empirical
         private void InitializeShaders()
         {
             clearTextureShader = new ComputeShader();
-            clearTextureShader.Open(Properties.Resources.clear_texture_comp);
+            clearTextureShader.Open("clear_texture_comp");
             clearTextureShader.Compile();
             OpenTKException.ThrowIfErrors();
 
             projectionShader = new ComputeShader();
-            projectionShader.Open(Properties.Resources.empirical_projection_comp);
+            projectionShader.Open("empirical_projection_comp");
             projectionShader.Compile();
             OpenTKException.ThrowIfErrors();
 
             displayShader = new ComputeShader();
-            displayShader.Open(Properties.Resources.empirical_projection_display_comp);
+            displayShader.Open("empirical_projection_display_comp");
             displayShader.Compile();
             OpenTKException.ThrowIfErrors();
         }

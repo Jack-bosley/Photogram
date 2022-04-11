@@ -3,14 +3,20 @@ using System.IO;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text;
+using System.Configuration;
 
 using OpenTK.Graphics.OpenGL;
+using System.Collections.Specialized;
 
 namespace Core.Rendering.Entities
 {
     public class Shader : IDisposable
     {
+        private static readonly string? directory;
+        private static readonly NameValueCollection? shaderNameValueCollection;
+
         private static readonly Shader defaultShader;
+
 
         private readonly int shaderProgram;
 
@@ -22,34 +28,24 @@ namespace Core.Rendering.Entities
 
         public Dictionary<ShaderType, string?> shaderNames;
 
+
         #region Constructor
         static Shader()
         {
+            directory = ConfigurationManager.AppSettings["shader_directory"];
+            if (directory == null)
+                throw new ArgumentNullException("directory", "shader_directory is not defined in App.config");
+
+            if (string.IsNullOrWhiteSpace(directory))
+                throw new ArgumentNullException("directory", "shader_directory is empty in App.config");
+                        
+            shaderNameValueCollection = ConfigurationManager.GetSection("shaders") as NameValueCollection;
+            if (shaderNameValueCollection == null)
+                throw new ArgumentNullException("shaderNameValueCollection", "No section with tags <shaders> found in App.config");
+
             defaultShader = new Shader();
-            GL.ShaderSource(defaultShader.vertexShader, @"
-#version 330 core
-layout (location = 0) in vec3 aPosition;
-uniform mat4 u_MVP;
-uniform vec3 u_Position;
-void main()
-{
-    gl_Position = u_MVP * vec4(aPosition + u_Position, 1.0);
-}");
-
-            GL.ShaderSource(defaultShader.fragmentShader, @"
-#version 330 core
-out vec4 FragColor;
-void main()
-{
-    FragColor = vec4(0.5f, 0.8f, 0.7f, 1.0f);
-}");
-
-            defaultShader.shaderNames = new Dictionary<ShaderType, string>()
-            {
-                { ShaderType.VertexShader,   "Default"},
-                { ShaderType.FragmentShader, "Default"},
-            };
-
+            defaultShader.Open("default_vert", ShaderType.VertexShader);
+            defaultShader.Open("default_frag", ShaderType.FragmentShader);
             defaultShader.Compile();
         }
         public Shader()
@@ -59,7 +55,7 @@ void main()
 
             shaderProgram = GL.CreateProgram();
 
-            shaderNames = new Dictionary<ShaderType, string>();
+            shaderNames = new Dictionary<ShaderType, string?>();
         }
 
         ~Shader()
@@ -84,15 +80,15 @@ void main()
         public static Shader Default => defaultShader;
         public int ShaderID => shaderProgram;
 
-
-        public void Open(string source, ShaderType shaderType, string? name = null)
+        public void Open(string name, ShaderType shaderType)
         {
+            string source = File.ReadAllText(GetShaderDirectory(name));
             switch (shaderType)
             {
                 case ShaderType.VertexShader: GL.ShaderSource(vertexShader, source); break;
                 case ShaderType.FragmentShader: GL.ShaderSource(fragmentShader, source); break;
             }
-            shaderNames[shaderType] = name;
+            shaderNames[shaderType] = directory;
         }
 
         public void Compile()
@@ -131,5 +127,19 @@ void main()
 
 
         public static implicit operator int(Shader shader) => shader.shaderProgram;
+
+        public static string GetShaderDirectory(string name)
+        {
+            string? shaderName = shaderNameValueCollection![name];
+            if (shaderName == null)
+                throw new ArgumentNullException("shader", $"shader with name {name} is not defined in App.config");
+
+            string fullPath = Path.Combine(directory!, shaderName);
+
+            if (!File.Exists(fullPath))
+                throw new ArgumentException("directory", $"No shader found with path {fullPath}");
+
+            return fullPath;
+        }
     }
 }

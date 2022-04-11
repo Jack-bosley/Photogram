@@ -44,8 +44,9 @@ namespace Core.Rendering.Entities
 
         public int ShaderID => shaderProgram;
 
-        public void Open(string source)
+        public void Open(string name)
         {
+            string source = File.ReadAllText(Shader.GetShaderDirectory(name));
             GL.ShaderSource(shader, source);
         }
 

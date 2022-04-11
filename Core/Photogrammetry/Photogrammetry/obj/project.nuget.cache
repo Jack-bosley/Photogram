@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "9YpZM738Vbjp0pSqTnKMG4y+RCvUsAemhVEKNUSromY2GFLEk7eIGSu3EaKlaPacfdi9cPIrRHTaJw89LSysVw==",
+  "dgSpecHash": "/unNx65oQ+qakHleyVRtdoL9oAEgXS36xGVg3YjgNTDguns5AfMF9WpyjeWt0BgHLkNPcfaiYpc0eysvjulalg==",
   "success": true,
   "projectFilePath": "D:\\Code\\C_Sharp\\_Repos\\Photogram\\Core\\Photogrammetry\\Photogrammetry\\Photogrammetry.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\Jack\\.nuget\\packages\\microsoft.win32.systemevents\\6.0.0\\microsoft.win32.systemevents.6.0.0.nupkg.sha512",
     "C:\\Users\\Jack\\.nuget\\packages\\opentk\\4.7.1\\opentk.4.7.1.nupkg.sha512",
     "C:\\Users\\Jack\\.nuget\\packages\\opentk.compute\\4.7.1\\opentk.compute.4.7.1.nupkg.sha512",
     "C:\\Users\\Jack\\.nuget\\packages\\opentk.core\\4.7.1\\opentk.core.4.7.1.nupkg.sha512",
@@ -15,7 +16,13 @@
     "C:\\Users\\Jack\\.nuget\\packages\\opentk.windowing.common\\4.7.1\\opentk.windowing.common.4.7.1.nupkg.sha512",
     "C:\\Users\\Jack\\.nuget\\packages\\opentk.windowing.desktop\\4.7.1\\opentk.windowing.desktop.4.7.1.nupkg.sha512",
     "C:\\Users\\Jack\\.nuget\\packages\\opentk.windowing.graphicslibraryframework\\4.7.1\\opentk.windowing.graphicslibraryframework.4.7.1.nupkg.sha512",
-    "C:\\Users\\Jack\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\5.0.0\\system.runtime.compilerservices.unsafe.5.0.0.nupkg.sha512"
+    "C:\\Users\\Jack\\.nuget\\packages\\system.configuration.configurationmanager\\6.0.0\\system.configuration.configurationmanager.6.0.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\system.drawing.common\\6.0.0\\system.drawing.common.6.0.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\5.0.0\\system.runtime.compilerservices.unsafe.5.0.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\system.security.accesscontrol\\6.0.0\\system.security.accesscontrol.6.0.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\system.security.cryptography.protecteddata\\6.0.0\\system.security.cryptography.protecteddata.6.0.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\system.security.permissions\\6.0.0\\system.security.permissions.6.0.0.nupkg.sha512",
+    "C:\\Users\\Jack\\.nuget\\packages\\system.windows.extensions\\6.0.0\\system.windows.extensions.6.0.0.nupkg.sha512"
   ],
   "logs": []
 }

@@ -9,8 +9,6 @@ D:\Code\C_Sharp\_Repos\Photogram\Core\Rendering\Rendering\bin\Debug\net6.0\Rende
 D:\Code\C_Sharp\_Repos\Photogram\Core\Rendering\Rendering\obj\Debug\net6.0\Rendering.dll
 D:\Code\C_Sharp\_Repos\Photogram\Core\Rendering\Rendering\obj\Debug\net6.0\ref\Rendering.dll
 D:\Code\C_Sharp\_Repos\Photogram\Core\Rendering\Rendering\obj\Debug\net6.0\Rendering.pdb
-D:\Code\C_Sharp\_Repos\Photogram\Core\Rendering\Rendering\obj\Debug\net6.0\Core.Rendering.Properties.Resources.resources
-D:\Code\C_Sharp\_Repos\Photogram\Core\Rendering\Rendering\obj\Debug\net6.0\Rendering.csproj.GenerateResource.cache
 D:\Code\C_Sharp\_Repos\Photogram\Assemblies\Debug\net6.0\Rendering.deps.json
 D:\Code\C_Sharp\_Repos\Photogram\Assemblies\Debug\net6.0\Rendering.dll
 D:\Code\C_Sharp\_Repos\Photogram\Assemblies\Debug\net6.0\ref\Rendering.dll

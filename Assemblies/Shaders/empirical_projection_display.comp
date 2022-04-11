@@ -23,7 +23,7 @@ void main()
         {
             for (int j = -10; j <= 10; j++)
             {
-                imageStore(img_output, point.pixel_position + ivec2(i, j), vec4(1, 1, 1, 0));
+                imageStore(img_output, point.pixel_position + ivec2(i, j), vec4(1, 0, 0, 0));
             }
         }
     }

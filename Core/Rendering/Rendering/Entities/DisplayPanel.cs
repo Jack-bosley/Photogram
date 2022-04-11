@@ -66,8 +66,8 @@ namespace Core.Rendering.Entities
             // Material
             viewMat = new Material();
             viewMat.Shader = new Shader();
-            viewMat.Shader.Open(Properties.Resources.default_vert, ShaderType.VertexShader);
-            viewMat.Shader.Open(Properties.Resources.default_frag, ShaderType.FragmentShader);
+            viewMat.Shader.Open("default_vert", ShaderType.VertexShader);
+            viewMat.Shader.Open("default_frag", ShaderType.FragmentShader);
             viewMat.Shader.Compile();
         }
         ~DisplayPanel()

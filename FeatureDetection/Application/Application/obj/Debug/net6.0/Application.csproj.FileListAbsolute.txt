@@ -31,3 +31,15 @@ D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\obj\De
 D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\bin\Debug\net6.0\Photogrammetry.dll
 D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\bin\Debug\net6.0\Photogrammetry.pdb
 D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\obj\Debug\net6.0\Application.csproj.AssemblyReference.cache
+D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\bin\Debug\net6.0\Microsoft.Win32.SystemEvents.dll
+D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\bin\Debug\net6.0\System.Configuration.ConfigurationManager.dll
+D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\bin\Debug\net6.0\System.Drawing.Common.dll
+D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\bin\Debug\net6.0\System.Security.Cryptography.ProtectedData.dll
+D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\bin\Debug\net6.0\System.Security.Permissions.dll
+D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\bin\Debug\net6.0\System.Windows.Extensions.dll
+D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\bin\Debug\net6.0\runtimes\win\lib\net6.0\Microsoft.Win32.SystemEvents.dll
+D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\bin\Debug\net6.0\runtimes\unix\lib\net6.0\System.Drawing.Common.dll
+D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Drawing.Common.dll
+D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Security.Cryptography.ProtectedData.dll
+D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\bin\Debug\net6.0\runtimes\win\lib\net6.0\System.Windows.Extensions.dll
+D:\Code\C_Sharp\_Repos\Photogram\FeatureDetection\Application\Application\bin\Debug\net6.0\Application.dll.config

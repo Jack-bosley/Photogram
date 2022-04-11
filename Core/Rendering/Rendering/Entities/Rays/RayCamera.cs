@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Configuration;
 
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
@@ -55,7 +56,7 @@ namespace Core.Rendering.Entities.Rays
         private void InitializeShader()
         {
             computeShader = new ComputeShader();
-            computeShader.Open(Properties.Resources.raytrace_comp);
+            computeShader.Open("raytrace_comp");
             computeShader.Compile();
 
             OpenTKException.ThrowIfErrors();
