@@ -19,7 +19,7 @@ namespace Core.Rendering.Entities
 
         public U? cameraData;
 
-        public Transform transform;
+        private Transform transform;
         private Transform? previousRenderTransform;
 
         public delegate void PreRenderHandler();
@@ -47,7 +47,8 @@ namespace Core.Rendering.Entities
 
 
 
-        public bool IsMoved => previousRenderTransform == null || transform.position != previousRenderTransform?.position || transform.rotation != previousRenderTransform?.rotation;
+        public bool IsMoved { get; private set; }
+        public Transform Transform => transform;
 
         public void BindToPanel(DisplayPanel panel)
         {
@@ -79,6 +80,11 @@ namespace Core.Rendering.Entities
 
             if (invokeResize)
                 OnResize?.Invoke(cameraData.Resolution);
+        }
+        public void SetCameraTransform(Transform newCameraTransform)
+        {
+            transform = newCameraTransform;
+            IsMoved = true;
         }
 
 

@@ -8,7 +8,7 @@ using OpenTK.Graphics.OpenGL;
 
 using Core.Rendering.Entities.Empirical;
 using Core.Rendering.Entities;
-
+using Core.Rendering.ErrorHandling;
 
 
 namespace Core.Photogrammetry
@@ -20,12 +20,21 @@ namespace Core.Photogrammetry
 
         private int PointGuessesSSBO;
 
+        private ComputeShader ErrorVectors { get; set; }
+
 
         public BundleAdjuster()
         {
             Frames = new List<Frame>();
             PointGuesses = new LabelledPoint[0];
+
+            ErrorVectors = new ComputeShader();
+            ErrorVectors.Open("error_vectors_comp");
+            ErrorVectors.Compile();
         }
+
+        public int PointCount => PointGuesses.Length;
+        public int FrameCount => Frames.Count;
 
 
         public void AddFrames(IEnumerable<Frame> frame) => Frames.AddRange(frame);
@@ -42,35 +51,134 @@ namespace Core.Photogrammetry
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
 
             foreach (Frame frame in Frames)
-                frame.GenerateBuffers();
+                frame.GenerateBuffers(PointCount);
         }
 
-        public void GetReprojectionError()
+
+        /// <summary>
+        /// Optimise guesses on specific frames
+        /// </summary>
+        /// <param name="frameIndices">Indices of frames to consider in optimisation</param>
+        public unsafe void Adjust(int[]? frameIndices = null)
         {
-            EmpCameraRenderArgs args = new EmpCameraRenderArgs()
+            // Check all frames exist
+            if (frameIndices != null)
             {
-                pointsCount = PointGuesses.Length,
-                worldPointsSSBO = PointGuessesSSBO,
-            };
-
-            EmpCamera camera = new EmpCamera(0, 0);
-            foreach (Frame frame in Frames)
-            {
-                // Set frame specific data
-                camera.SetCameraData(frame.CameraData);
-                args.screenPointsSSBO = frame.ImagePointSSBO;
-
-                // 
-                camera.RenderView(args);
-
-
+                foreach (int frameIndex in frameIndices)
+                {
+                    if (frameIndex < 0 && frameIndex >= Frames.Count)
+                        throw new Exception($"Frame with index {frameIndex} not found ({0}, {Frames.Count})");
+                }
             }
-        }
+            else
+            {
+                frameIndices = new int[FrameCount];
+                for (int i = 0; i < FrameCount; i++)
+                    frameIndices[i] = i;
+            }
 
+            int adjustmentFrameCount = frameIndices.Length;
+            int totalAdjustmentPoints = adjustmentFrameCount * PointCount;
 
-        public void Adjust()
-        {
-            EmpCamera camera = new EmpCamera(0, 0);
+            int projectedPointsSSBO;
+            int truePointsSSBO;
+
+            int errorVectorsSSBO;
+
+            // Project all points for all frames and store in a single buffer
+            {
+                projectedPointsSSBO = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ShaderStorageBuffer, projectedPointsSSBO);
+                GL.BufferData(BufferTarget.ShaderStorageBuffer, totalAdjustmentPoints * sizeof(ScreenPoint), IntPtr.Zero, BufferUsageHint.DynamicDraw);
+
+                EmpCamera camera = new EmpCamera(0, 0);
+                EmpCameraRenderArgs args = new EmpCameraRenderArgs()
+                {
+                    pointsCount = PointCount,
+                    worldPointsSSBO = PointGuessesSSBO,
+                    screenPointsSSBO = projectedPointsSSBO,     // Rendering to a local buffer for later use in this method
+
+                    ignoreMemoryBarrierBit = true,
+                    renderToTexture = false,
+                };
+
+                int frameNumber = 0;
+                foreach (int frameIndex in frameIndices)
+                {
+                    Frame frame = Frames[frameIndex];
+
+                    camera.SetCameraData(frame.CameraData);
+                    camera.SetCameraTransform(frame.CameraTransform);
+
+                    args.screenPointsOffset = frameNumber * PointCount;
+
+                    camera.RenderView(args);
+
+                    frameNumber++;
+                }
+            }
+
+            // Copy all true points into a single buffer
+            {
+                truePointsSSBO = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.CopyWriteBuffer, truePointsSSBO);
+                GL.BufferData(BufferTarget.CopyWriteBuffer, totalAdjustmentPoints * sizeof(ScreenPoint), IntPtr.Zero, BufferUsageHint.DynamicDraw);
+
+                IntPtr writeOffset;
+                int frameSize = PointCount * sizeof(ScreenPoint);
+
+                int frameNumber = 0;
+                foreach (int frameIndex in frameIndices)
+                {
+                    GL.BindBuffer(BufferTarget.CopyReadBuffer, Frames[frameIndex].ImagePointSSBO);
+
+                    writeOffset = new IntPtr(frameNumber * frameSize);
+                    GL.CopyBufferSubData(BufferTarget.CopyReadBuffer, BufferTarget.CopyWriteBuffer, IntPtr.Zero, writeOffset, frameSize);
+
+                    frameNumber++;
+                }
+            }
+
+            GL.MemoryBarrier(MemoryBarrierFlags.AllBarrierBits);
+
+            // Calculate the error vectors
+            {
+                errorVectorsSSBO = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ShaderStorageBuffer, errorVectorsSSBO);
+                GL.BufferData(BufferTarget.ShaderStorageBuffer, totalAdjustmentPoints * sizeof(ScreenPointError), IntPtr.Zero, BufferUsageHint.DynamicDraw);
+
+                // Compare projected to true point positions to get error vectors
+                ErrorVectors.UseProgram();
+                int trueScreenPointBlockIndex = GL.GetProgramResourceIndex(ErrorVectors, ProgramInterface.ShaderStorageBlock, "true_screen_points_ssbo");
+                GL.ShaderStorageBlockBinding(ErrorVectors, trueScreenPointBlockIndex, 1);
+                GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 1, truePointsSSBO);
+
+                int projScreenPointBlockIndex = GL.GetProgramResourceIndex(ErrorVectors, ProgramInterface.ShaderStorageBlock, "proj_screen_points_ssbo");
+                GL.ShaderStorageBlockBinding(ErrorVectors, projScreenPointBlockIndex, 2);
+                GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 2, projectedPointsSSBO);
+
+                int errorVectorsBlockIndex = GL.GetProgramResourceIndex(ErrorVectors, ProgramInterface.ShaderStorageBlock, "error_vectors_ssbo");
+                GL.ShaderStorageBlockBinding(ErrorVectors, errorVectorsBlockIndex, 3);
+                GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 3, errorVectorsSSBO);
+                OpenTKException.ThrowIfErrors();
+
+                GL.DispatchCompute(totalAdjustmentPoints, 1, 1);
+                GL.MemoryBarrier(MemoryBarrierFlags.ShaderStorageBarrierBit);
+                OpenTKException.ThrowIfErrors();
+            }
+
+            ScreenPoint[] truePoints = new ScreenPoint[totalAdjustmentPoints];
+            ScreenPoint[] projPoints = new ScreenPoint[totalAdjustmentPoints];
+            ScreenPointError[] errors = new ScreenPointError[totalAdjustmentPoints];
+
+            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, truePointsSSBO);
+            GL.GetBufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, totalAdjustmentPoints * sizeof(ScreenPoint), truePoints);
+
+            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, projectedPointsSSBO);
+            GL.GetBufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, totalAdjustmentPoints * sizeof(ScreenPoint), projPoints);
+
+            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, errorVectorsSSBO);
+            GL.GetBufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, totalAdjustmentPoints * sizeof(ScreenPointError), errors);
 
         }
 
@@ -100,7 +208,7 @@ namespace Core.Photogrammetry
             List<Frame> result = new List<Frame>(new Frame[cameraPositions.Length]);
             for (int i = 0; i < cameraPositions.Length; i++)
             {
-                camera.transform = cameraPositions[i];
+                camera.SetCameraTransform(cameraPositions[i]);
                 camera.RenderView(args);
 
                 GL.BindBuffer(BufferTarget.ShaderStorageBuffer, args.screenPointsSSBO);
@@ -110,7 +218,7 @@ namespace Core.Photogrammetry
                 result[i].CameraData = camera.cameraData;
 
                 if (provideCameraOrientations)
-                    result[i].CameraTransform = camera.transform;
+                    result[i].CameraTransform = camera.Transform;
             }
 
             return result;

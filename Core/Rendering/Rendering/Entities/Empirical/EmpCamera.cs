@@ -76,26 +76,31 @@ namespace Core.Rendering.Entities.Empirical
             if (!IsMoved)
                 return;
 
-            cameraRotationMatrix = transform.GetRotationMatrix();
+            cameraRotationMatrix = Transform.GetRotationMatrix();
         }
 
         private new void RenderView(EmpCameraRenderArgs args)
         {
-            // Check if an output texture is wanted
-            bool renderToTexture = texture != null;
+            // Check if an output texture is wanted and possible
+            if (args.renderToTexture && texture == null)
+                throw new Exception("Texture not provided for rendering");
 
-            // Init shader if not already
-            if (projectionShader == null || displayShader == null)
-                return;
+            // Check if an output texture is wanted and possible
+            if (projectionShader == null)
+                throw new Exception("Texture not provided for rendering");
 
-            if (renderToTexture)
+            if (args.ignoreMemoryBarrierBit && args.renderToTexture)
+                Console.WriteLine("Cannot ignore memory barrier bit when rendering to a texture");
+
+
+            if (args.renderToTexture)
             {
                 texture!.Bind(TextureUnit.Texture0);
                 GL.BindImageTexture(0, texture, 0, false, 0, TextureAccess.WriteOnly, SizedInternalFormat.Rgba8);
 
                 // Clear the texture
                 clearTextureShader!.UseProgram();
-                GL.Uniform4(GL.GetUniformLocation(projectionShader, "u_clear_colour"), 0, 0, 0, 0);
+                GL.Uniform4(GL.GetUniformLocation(clearTextureShader, "u_clear_colour"), 0, 0, 0, 0);
                 OpenTKException.ThrowIfErrors();
 
                 GL.DispatchCompute((cameraData.Resolution.X / 32) + 1, (cameraData.Resolution.Y / 32) + 1, 1);
@@ -103,30 +108,33 @@ namespace Core.Rendering.Entities.Empirical
                 OpenTKException.ThrowIfErrors();
             }
 
+
             // Project the points into the camera plane
             projectionShader!.UseProgram();
             GL.Uniform2(GL.GetUniformLocation(projectionShader, "u_focal_lengths"), cameraData.FocalLength);
             GL.Uniform3(GL.GetUniformLocation(projectionShader, "u_radial_distortion"), cameraData.RadialDistortionCoefficient);
             GL.Uniform2(GL.GetUniformLocation(projectionShader, "u_tangential_distortion"), cameraData.TangentialDistortionCoefficient);
             GL.UniformMatrix3(GL.GetUniformLocation(projectionShader, "u_camera_rotation"), false, ref cameraRotationMatrix);
-            GL.Uniform3(GL.GetUniformLocation(projectionShader, "u_camera_position"), transform.position);
+            GL.Uniform3(GL.GetUniformLocation(projectionShader, "u_camera_position"), Transform.position);
             GL.Uniform2(GL.GetUniformLocation(projectionShader, "u_output_resolution"), cameraData.Resolution.X, cameraData.Resolution.Y);
+            GL.Uniform1(GL.GetUniformLocation(projectionShader, "u_screen_points_offset"), args.screenPointsOffset);
 
             int worldPointsBlockIndex = GL.GetProgramResourceIndex(projectionShader, ProgramInterface.ShaderStorageBlock, "world_points_ssbo");
             GL.ShaderStorageBlockBinding(projectionShader, worldPointsBlockIndex, 1);
             GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 1, args.worldPointsSSBO);
-
             int screenPointsBlockIndex = GL.GetProgramResourceIndex(projectionShader, ProgramInterface.ShaderStorageBlock, "screen_points_ssbo");
             GL.ShaderStorageBlockBinding(projectionShader, screenPointsBlockIndex, 2);
             GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 2, args.screenPointsSSBO);
-
             OpenTKException.ThrowIfErrors();
 
             GL.DispatchCompute(args.pointsCount / 1, 1, 1);
-            GL.MemoryBarrier(MemoryBarrierFlags.ShaderStorageBarrierBit);
+            // Memory barrier bit required for rendering
+            if (args.renderToTexture || !args.ignoreMemoryBarrierBit)
+                GL.MemoryBarrier(MemoryBarrierFlags.ShaderStorageBarrierBit);
             OpenTKException.ThrowIfErrors();
 
-            if (renderToTexture)
+
+            if (args.renderToTexture)
             {
                 // Draw points to texture for debugging
                 displayShader!.UseProgram();
@@ -163,5 +171,10 @@ namespace Core.Rendering.Entities.Empirical
 
         public int worldPointsSSBO;
         public int screenPointsSSBO;
+
+        public int screenPointsOffset;
+
+        public bool renderToTexture;
+        public bool ignoreMemoryBarrierBit;
     }
 }

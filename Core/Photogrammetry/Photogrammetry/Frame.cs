@@ -21,16 +21,18 @@ namespace Core.Photogrammetry
 
         public int ImagePointSSBO { get; private set; }
 
+
         public Frame(Vector2i frameResolution, ScreenPoint[] screenPoints)
         {
             FramePointImage = new PointImage(frameResolution, screenPoints);
         }
 
-        public unsafe void GenerateBuffers()
+        public unsafe void GenerateBuffers(int pointCount)
         {
             ImagePointSSBO = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, ImagePointSSBO);
-            GL.BufferData(BufferTarget.ShaderStorageBuffer, FramePointImage.ImagePoints.Length * sizeof(ScreenPoint), FramePointImage.ImagePoints, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ShaderStorageBuffer, pointCount * sizeof(ScreenPoint), FramePointImage.ImagePoints, BufferUsageHint.StaticDraw);
+
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
         }
     }

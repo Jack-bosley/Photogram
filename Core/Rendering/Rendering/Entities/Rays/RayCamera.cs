@@ -88,10 +88,10 @@ namespace Core.Rendering.Entities.Rays
             if (rayBundle == null)
                 InitializeRays();
 
-            Vector3 directionVector = transform.GetDirectionVector();
+            Vector3 directionVector = Transform.GetDirectionVector();
 
             float distanceToCentre = 1 / MathF.Tan(cameraData.FOV / 2); 
-            Vector3 centreOfView = transform.position + (distanceToCentre * directionVector);
+            Vector3 centreOfView = Transform.position + (distanceToCentre * directionVector);
 
             Vector3 horizontal = Vector3.Cross(directionVector, new Vector3(0, 1, 0)).Normalized();
             Vector3 vertical = -Vector3.Cross(directionVector, horizontal).Normalized() * cameraData.Resolution.Y / cameraData.Resolution.X;
@@ -105,9 +105,9 @@ namespace Core.Rendering.Entities.Rays
                     float tx = (2 * x / (float)(cameraData.Resolution.X - 1)) - 1;
                     float ty = (2 * y / (float)(cameraData.Resolution.Y - 1)) - 1;
                     Vector3 targetPoint = centreOfView - (tx * horizontal) - (ty * vertical);
-                    Vector3 direction = (targetPoint - transform.position).Normalized();
+                    Vector3 direction = (targetPoint - Transform.position).Normalized();
 
-                    rayBundle![i].origin = new Vector4(transform.position);
+                    rayBundle![i].origin = new Vector4(Transform.position);
                     rayBundle![i].direction = new Vector4(direction);
                     rayBundle![i].pixel = new Vector2i(x, y);
 

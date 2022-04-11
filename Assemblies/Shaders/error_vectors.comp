@@ -1,0 +1,36 @@
+#version 440
+
+struct ScreenPoint
+{
+    vec2 screen_position;
+    ivec2 pixel_position;
+    bool is_visible;
+    int point_id;
+};
+
+struct ScreenPointError
+{
+    vec2 error_vector;
+    float error_radius;
+};
+
+layout(std430, binding = 0) buffer true_screen_points_ssbo { ScreenPoint true_screen_points[]; };
+layout(std430, binding = 1) buffer proj_screen_points_ssbo { ScreenPoint proj_screen_points[]; };
+
+layout(std430, binding = 2) buffer error_vectors_ssbo { ScreenPointError error_vectors[]; };
+
+
+layout(local_size_x = 1, local_size_y = 1) in;
+void main()
+{
+    ScreenPointError error = error_vectors[gl_GlobalInvocationID.x];
+
+    if (true_screen_points[gl_GlobalInvocationID.x].is_visible && 
+        proj_screen_points[gl_GlobalInvocationID.x].is_visible)
+    {
+        error.error_vector = vec2(true_screen_points[gl_GlobalInvocationID.x].pixel_position - proj_screen_points[gl_GlobalInvocationID.x].pixel_position);
+        error.error_radius = sqrt(dot(error.error_vector, error.error_vector));
+    }
+
+    error_vectors[gl_GlobalInvocationID.x] = error;
+}

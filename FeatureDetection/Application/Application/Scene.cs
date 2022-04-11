@@ -18,11 +18,7 @@ namespace Application
         public DisplayPanel displayPanel;
         public EmpCamera camera;
 
-        public LabelledPoint[] worldPoints;
-        public int worldPointsSSBO;
-
-        public ScreenPoint[] screenPoints;
-        public int screenPointsSSBO;
+        BundleAdjuster bundleAdjuster;
 
         bool isRendered = false;
 
@@ -30,33 +26,21 @@ namespace Application
         {
             displayPanel = new DisplayPanel();
 
+            bundleAdjuster = new BundleAdjuster();
+
             camera = new EmpCamera(1920, 1080);
             camera.cameraData.FocalLength = new Vector2(1, 16 / 9.0f);
             camera.cameraData.RadialDistortionCoefficient = (0, 0f, 0f);
 
             camera.BindToPanel(displayPanel);
-
-            worldPointsSSBO = GL.GenBuffer();
-            screenPointsSSBO = GL.GenBuffer();
-
-            worldPoints = new LabelledPoint[3];
-            worldPoints[0] = new LabelledPoint() { pointID = 0, position = new Vector3(   0,    0, 0)};
-            worldPoints[1] = new LabelledPoint() { pointID = 1, position = new Vector3(0.1f,    0, 0)};
-            worldPoints[2] = new LabelledPoint() { pointID = 2, position = new Vector3(   0, 0.1f, 0)};
-
-            screenPoints = new ScreenPoint[3];
-            screenPoints[0] = new ScreenPoint();
-            screenPoints[1] = new ScreenPoint();
-            screenPoints[2] = new ScreenPoint();
-
         }
 
         public (List<Frame> frames, LabelledPoint[] startingGuess) GetDummyData()
         {
             Console.WriteLine("Started: Create Dummy Frames");
 
-            int numFrames = 100;
-            int numPoints = 1000;
+            int numFrames = 2;
+            int numPoints = 5;
             (float min, float max) xRange = (-0.5f, 0.5f);
             (float min, float max) yRange = (-0.5f, 0.5f);
             (float min, float max) zRange = (-0.5f, 0.5f);
@@ -121,13 +105,11 @@ namespace Application
             (List<Frame> frames, LabelledPoint[] startingGuess) dummyData = GetDummyData();
 
             // Create a bundle adjuster for the dummy data
-            BundleAdjuster bundleAdjuster = new BundleAdjuster();
             bundleAdjuster.AddFrames(dummyData.frames);
             bundleAdjuster.SetStartingGuess(dummyData.startingGuess);
 
-
             bundleAdjuster.GenerateBuffers();
-
+            bundleAdjuster.Adjust();
 
             isRendered = true;
         }
@@ -139,26 +121,6 @@ namespace Application
                 PerformBundleAdjustment();
 
             displayPanel.Draw();
-        }
-
-        private EmpCameraRenderArgs BufferSceneData()
-        {
-            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, worldPointsSSBO);
-            GL.BufferData(BufferTarget.ShaderStorageBuffer, worldPoints.Length * sizeof(LabelledPoint), worldPoints, BufferUsageHint.DynamicDraw);
-
-            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, screenPointsSSBO);
-            GL.BufferData(BufferTarget.ShaderStorageBuffer, screenPoints.Length * sizeof(ScreenPoint), screenPoints, BufferUsageHint.DynamicDraw);
-
-            GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
-
-            EmpCameraRenderArgs args = new EmpCameraRenderArgs()
-            {
-                pointsCount = worldPoints.Length,
-
-                worldPointsSSBO = worldPointsSSBO,
-                screenPointsSSBO = screenPointsSSBO,
-            };
-            return args;
         }
     }
 }
