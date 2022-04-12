@@ -16,9 +16,9 @@ namespace Core.Photogrammetry
     public class BundleAdjuster
     {
         private List<Frame> Frames { get; set; }
-        private LabelledPoint[] PointGuesses { get; set; }
 
-        private int PointGuessesSSBO;
+        public int PointGuessesSSBO { get; private set; }
+        private LabelledPoint[] PointGuesses { get; set; }
 
         private ComputeShader ErrorVectors { get; set; }
 
@@ -36,6 +36,8 @@ namespace Core.Photogrammetry
         public int PointCount => PointGuesses.Length;
         public int FrameCount => Frames.Count;
 
+        public Transform GetCameraTransformation(int frameIndex) => Frames[frameIndex].CameraTransform;
+        public EmpCameraData GetCameraData(int frameIndex) => Frames[frameIndex].CameraData;
 
         public void AddFrames(IEnumerable<Frame> frame) => Frames.AddRange(frame);
         public void AddFrames(params Frame[] frame) => Frames.AddRange(frame);
@@ -47,7 +49,7 @@ namespace Core.Photogrammetry
         {
             PointGuessesSSBO = GL.GenBuffer();
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, PointGuessesSSBO);
-            GL.BufferData(BufferTarget.ShaderStorageBuffer, PointGuesses.Length * sizeof(LabelledPoint), PointGuesses, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ShaderStorageBuffer, PointCount * sizeof(LabelledPoint), PointGuesses, BufferUsageHint.StaticDraw);
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
 
             foreach (Frame frame in Frames)
@@ -167,6 +169,7 @@ namespace Core.Photogrammetry
                 OpenTKException.ThrowIfErrors();
             }
 
+            /*
             ScreenPoint[] truePoints = new ScreenPoint[totalAdjustmentPoints];
             ScreenPoint[] projPoints = new ScreenPoint[totalAdjustmentPoints];
             ScreenPointError[] errors = new ScreenPointError[totalAdjustmentPoints];
@@ -179,7 +182,7 @@ namespace Core.Photogrammetry
 
             GL.BindBuffer(BufferTarget.ShaderStorageBuffer, errorVectorsSSBO);
             GL.GetBufferSubData(BufferTarget.ShaderStorageBuffer, IntPtr.Zero, totalAdjustmentPoints * sizeof(ScreenPointError), errors);
-
+            */
         }
 
 

@@ -17,10 +17,13 @@ namespace Application
     {
         public DisplayPanel displayPanel;
         public EmpCamera camera;
+        public int cameraViewSSBO;
 
         BundleAdjuster bundleAdjuster;
 
         bool isRendered = false;
+
+
 
         public Scene()
         {
@@ -39,8 +42,8 @@ namespace Application
         {
             Console.WriteLine("Started: Create Dummy Frames");
 
-            int numFrames = 2;
-            int numPoints = 5;
+            int numFrames = 400;
+            int numPoints = 5000;
             (float min, float max) xRange = (-0.5f, 0.5f);
             (float min, float max) yRange = (-0.5f, 0.5f);
             (float min, float max) zRange = (-0.5f, 0.5f);
@@ -109,16 +112,40 @@ namespace Application
             bundleAdjuster.SetStartingGuess(dummyData.startingGuess);
 
             bundleAdjuster.GenerateBuffers();
+
+            DateTime adjustStart = DateTime.Now;
             bundleAdjuster.Adjust();
+            Console.WriteLine($"\tComplete: Adjustment (1 iteration) {(DateTime.Now - adjustStart).TotalSeconds}");
 
             isRendered = true;
         }
 
 
-        public void DrawMainCamera()
+        public unsafe void DrawMainCamera()
         {
             if (!isRendered)
+            {
                 PerformBundleAdjustment();
+
+                cameraViewSSBO = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.ShaderStorageBuffer, cameraViewSSBO);
+                GL.BufferData(BufferTarget.ShaderStorageBuffer, bundleAdjuster.PointCount * sizeof(ScreenPoint), IntPtr.Zero, BufferUsageHint.DynamicDraw);
+                GL.BindBuffer(BufferTarget.ShaderStorageBuffer, 0);
+            }
+
+            EmpCameraRenderArgs args = new EmpCameraRenderArgs()
+            {
+                pointsCount = bundleAdjuster.PointCount,
+
+                worldPointsSSBO = bundleAdjuster.PointGuessesSSBO,
+                screenPointsSSBO = cameraViewSSBO,
+
+                renderToTexture = true,
+            };
+
+            camera.SetCameraData(bundleAdjuster.GetCameraData(0));
+            camera.SetCameraTransform(bundleAdjuster.GetCameraTransformation(0));
+            camera.RenderView(args);
 
             displayPanel.Draw();
         }

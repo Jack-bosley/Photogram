@@ -100,7 +100,7 @@ namespace Core.Rendering.Entities.Empirical
 
                 // Clear the texture
                 clearTextureShader!.UseProgram();
-                GL.Uniform4(GL.GetUniformLocation(clearTextureShader, "u_clear_colour"), 0, 0, 0, 0);
+                GL.Uniform4(GL.GetUniformLocation(clearTextureShader, "u_clear_colour"), 0.0f, 0.0f, 0.0f, 0.0f);
                 OpenTKException.ThrowIfErrors();
 
                 GL.DispatchCompute((cameraData.Resolution.X / 32) + 1, (cameraData.Resolution.Y / 32) + 1, 1);
