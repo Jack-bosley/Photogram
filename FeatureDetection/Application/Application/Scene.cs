@@ -42,7 +42,7 @@ namespace Application
         {
             Console.WriteLine("Started: Create Dummy Frames");
 
-            int numFrames = 400;
+            int numFrames = 1000;
             int numPoints = 5000;
             (float min, float max) xRange = (-0.5f, 0.5f);
             (float min, float max) yRange = (-0.5f, 0.5f);
