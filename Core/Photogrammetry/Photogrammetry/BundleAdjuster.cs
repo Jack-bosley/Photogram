@@ -229,26 +229,23 @@ namespace Core.Photogrammetry
                 OpenTKException.ThrowIfErrors();
 
                 Jacobians.UseProgram();
+                GL.Uniform1(GL.GetUniformLocation(Jacobians, "u_point_count"), PointCount);
 
                 int pointPositionsBlockIndex = GL.GetProgramResourceIndex(Jacobians, ProgramInterface.ShaderStorageBlock, "point_positions_ssbo");
                 GL.ShaderStorageBlockBinding(Jacobians, pointPositionsBlockIndex, 1);
                 GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 1, PointGuessesSSBO);
-                OpenTKException.ThrowIfErrors();
 
                 int cameraPositionsBlockIndex = GL.GetProgramResourceIndex(Jacobians, ProgramInterface.ShaderStorageBlock, "camera_positions_ssbo");
                 GL.ShaderStorageBlockBinding(Jacobians, cameraPositionsBlockIndex, 2);
                 GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 2, cameraPositionsSSBO);
-                OpenTKException.ThrowIfErrors();
 
                 int cameraRotationsBlockIndex = GL.GetProgramResourceIndex(Jacobians, ProgramInterface.ShaderStorageBlock, "camera_rotations_ssbo");
                 GL.ShaderStorageBlockBinding(Jacobians, cameraRotationsBlockIndex, 3);
                 GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 3, cameraRotationsSSBO);
-                OpenTKException.ThrowIfErrors();
 
                 int cameraDatasBlockIndex = GL.GetProgramResourceIndex(Jacobians, ProgramInterface.ShaderStorageBlock, "camera_datas_ssbo");
                 GL.ShaderStorageBlockBinding(Jacobians, cameraDatasBlockIndex, 4);
                 GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 4, cameraDatasSSBO);
-                OpenTKException.ThrowIfErrors();
 
                 int jacobiansBlockIndex = GL.GetProgramResourceIndex(Jacobians, ProgramInterface.ShaderStorageBlock, "jacobians_ssbo");
                 GL.ShaderStorageBlockBinding(Jacobians, jacobiansBlockIndex, 6);
@@ -256,7 +253,7 @@ namespace Core.Photogrammetry
                 OpenTKException.ThrowIfErrors();
 
 
-                GL.DispatchCompute(totalAdjustmentPoints, 1, 1);
+                GL.DispatchCompute(adjustmentFrameCount, PointCount, 1);
                 GL.MemoryBarrier(MemoryBarrierFlags.ShaderStorageBarrierBit);
                 OpenTKException.ThrowIfErrors();
             }

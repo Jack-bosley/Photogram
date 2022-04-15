@@ -33,21 +33,26 @@ struct Jacobian
 
 float sq(float x) { return x * x; }
 
+// in
 layout(std430, binding = 0) buffer point_positions_ssbo { LabelledWorldPoint point_positions[]; };
 layout(std430, binding = 1) buffer camera_positions_ssbo { vec3 camera_positions[]; };
 layout(std430, binding = 2) buffer camera_rotations_ssbo { vec3 camera_rotations[]; };
 layout(std430, binding = 3) buffer camera_datas_ssbo { CameraData camera_datas[]; };
 layout(std430, binding = 4) buffer camera_rotation_derivatives_ssbo { CameraRotationDerivatives camera_rotation_derivatives[]; };
-
+// out
 layout(std430, binding = 5) buffer jacobians_ssbo { Jacobian jacobians[]; };
+
+uniform int u_point_count;
+
 
 layout(local_size_x = 1, local_size_y = 1) in;
 void main()
 {
     // 0. Commonly Used Values
     CameraData cam_data = camera_datas[gl_GlobalInvocationID.x];
-    LabelledWorldPoint point = point_positions[gl_GlobalInvocationID.x];
     vec3 camera_position = camera_positions[gl_GlobalInvocationID.x];
+
+    LabelledWorldPoint point = point_positions[gl_GlobalInvocationID.y];
 
         // shorter name for rotation matrix
     mat3 R = cam_data.rotation_matrix;
@@ -238,5 +243,5 @@ void main()
 
 
     // 4. Full jacobian
-    jacobians[gl_GlobalInvocationID.x] = Jacobian(cam_rot_component, cam_pos_component, point_pos_component);
+    jacobians[(gl_GlobalInvocationID.x * u_point_count) + gl_GlobalInvocationID.y] = Jacobian(cam_rot_component, cam_pos_component, point_pos_component);
 }

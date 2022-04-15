@@ -103,8 +103,24 @@ namespace Application
             return (frames, startingGuess);
         }
 
+        public void TestJacobians()
+        {
+            Transform cameraTransform = new Transform();
+            LabelledPoint point = new LabelledPoint()
+            {
+                pointID = 0,
+                position = new Vector3(0, 0, 5),
+            };
+
+            JacobianTest jacobianTest = new JacobianTest();
+            jacobianTest.Test(cameraTransform, camera.cameraData, point);
+
+        }
+
         public void PerformBundleAdjustment()
         {
+            TestJacobians();
+
             (List<Frame> frames, LabelledPoint[] startingGuess) dummyData = GetDummyData();
 
             // Create a bundle adjuster for the dummy data
