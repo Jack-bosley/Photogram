@@ -51,8 +51,8 @@ void main()
         float rad_dist_sx = rad_dist_qd * rad_dist_sq;      // ^6
 
         float r_distortion = (u_radial_distortion.x * rad_dist_sq) + 
-                            (u_radial_distortion.y * rad_dist_qd) +
-                            (u_radial_distortion.z * rad_dist_sx);
+                             (u_radial_distortion.y * rad_dist_qd) +
+                             (u_radial_distortion.z * rad_dist_sx);
         vec2 r_distortion_offset = r_distortion * pos_c_p;
 
         // Tangential

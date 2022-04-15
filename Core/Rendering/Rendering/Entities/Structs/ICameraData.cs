@@ -12,5 +12,6 @@ namespace Core.Rendering.Entities
     {
         public Vector2i Resolution { get; set; }
         public float FOV { get; set; }
+        public Matrix3 RotationMatrix { get; set; }
     }
 }

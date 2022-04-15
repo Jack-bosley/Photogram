@@ -93,6 +93,7 @@ namespace Core.Photogrammetry
             int cameraPositionsSSBO;
             int cameraRotationsSSBO;
             int cameraDatasSSBO;
+            int cameraRotationDerivativesSSBO;
 
             int errorVectorsSSBO;
             int jacobiansSSBO;
@@ -156,6 +157,7 @@ namespace Core.Photogrammetry
                 Vector3[] cameraPositions = new Vector3[adjustmentFrameCount];
                 Vector3[] cameraRotations = new Vector3[adjustmentFrameCount];
                 EmpCameraData[] cameraDatas = new EmpCameraData[adjustmentFrameCount];
+                (Matrix3 x, Matrix3 y, Matrix3 z)[] cameraRotationDerivatives = new (Matrix3 x, Matrix3 y, Matrix3 z)[adjustmentFrameCount];
 
                 int frameNumber = 0;
                 foreach (int frameIndex in frameIndices)
@@ -163,6 +165,7 @@ namespace Core.Photogrammetry
                     cameraPositions[frameNumber] = Frames[frameIndex].CameraTransform.position;
                     cameraRotations[frameNumber] = Frames[frameIndex].CameraTransform.rotation;
                     cameraDatas[frameNumber] = Frames[frameIndex].CameraData;
+                    cameraRotationDerivatives[frameNumber] = Frames[frameIndex].CameraTransform.GetRotationEulerVectorDerivative();
 
                     frameNumber++;
                 }
@@ -178,6 +181,10 @@ namespace Core.Photogrammetry
                 cameraDatasSSBO = GL.GenBuffer();
                 GL.BindBuffer(BufferTarget.CopyWriteBuffer, cameraDatasSSBO);
                 GL.BufferData(BufferTarget.CopyWriteBuffer, adjustmentFrameCount * sizeof(EmpCameraData), cameraDatas, BufferUsageHint.DynamicCopy);
+
+                cameraRotationDerivativesSSBO = GL.GenBuffer();
+                GL.BindBuffer(BufferTarget.CopyWriteBuffer, cameraRotationDerivativesSSBO);
+                GL.BufferData(BufferTarget.CopyWriteBuffer, adjustmentFrameCount * 3 * sizeof(Matrix3), cameraRotationDerivatives, BufferUsageHint.DynamicCopy);
 
                 GL.BindBuffer(BufferTarget.CopyWriteBuffer, 0);
 
@@ -219,29 +226,32 @@ namespace Core.Photogrammetry
                 GL.BindBuffer(BufferTarget.CopyWriteBuffer, jacobiansSSBO);
                 GL.BufferData(BufferTarget.CopyWriteBuffer, totalAdjustmentPoints * sizeof(Jacobian), IntPtr.Zero, BufferUsageHint.DynamicDraw);
                 GL.BindBuffer(BufferTarget.CopyWriteBuffer, 0);
+                OpenTKException.ThrowIfErrors();
 
                 Jacobians.UseProgram();
 
-                int pointPositionsBlockIndex = GL.GetProgramResourceIndex(ErrorVectors, ProgramInterface.ShaderStorageBlock, "point_positions_ssbo");
-                GL.ShaderStorageBlockBinding(ErrorVectors, pointPositionsBlockIndex, 1);
+                int pointPositionsBlockIndex = GL.GetProgramResourceIndex(Jacobians, ProgramInterface.ShaderStorageBlock, "point_positions_ssbo");
+                GL.ShaderStorageBlockBinding(Jacobians, pointPositionsBlockIndex, 1);
                 GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 1, PointGuessesSSBO);
+                OpenTKException.ThrowIfErrors();
 
-                int cameraPositionsBlockIndex = GL.GetProgramResourceIndex(ErrorVectors, ProgramInterface.ShaderStorageBlock, "camera_positions_ssbo");
-                GL.ShaderStorageBlockBinding(ErrorVectors, cameraPositionsBlockIndex, 2);
+                int cameraPositionsBlockIndex = GL.GetProgramResourceIndex(Jacobians, ProgramInterface.ShaderStorageBlock, "camera_positions_ssbo");
+                GL.ShaderStorageBlockBinding(Jacobians, cameraPositionsBlockIndex, 2);
                 GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 2, cameraPositionsSSBO);
+                OpenTKException.ThrowIfErrors();
 
-                int cameraRotationsBlockIndex = GL.GetProgramResourceIndex(ErrorVectors, ProgramInterface.ShaderStorageBlock, "camera_rotations_ssbo");
-                GL.ShaderStorageBlockBinding(ErrorVectors, cameraRotationsBlockIndex, 3);
+                int cameraRotationsBlockIndex = GL.GetProgramResourceIndex(Jacobians, ProgramInterface.ShaderStorageBlock, "camera_rotations_ssbo");
+                GL.ShaderStorageBlockBinding(Jacobians, cameraRotationsBlockIndex, 3);
                 GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 3, cameraRotationsSSBO);
                 OpenTKException.ThrowIfErrors();
 
-                int cameraDatasBlockIndex = GL.GetProgramResourceIndex(ErrorVectors, ProgramInterface.ShaderStorageBlock, "camera_datas_ssbo");
-                GL.ShaderStorageBlockBinding(ErrorVectors, cameraDatasBlockIndex, 4);
+                int cameraDatasBlockIndex = GL.GetProgramResourceIndex(Jacobians, ProgramInterface.ShaderStorageBlock, "camera_datas_ssbo");
+                GL.ShaderStorageBlockBinding(Jacobians, cameraDatasBlockIndex, 4);
                 GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 4, cameraDatasSSBO);
                 OpenTKException.ThrowIfErrors();
 
-                int jacobiansBlockIndex = GL.GetProgramResourceIndex(ErrorVectors, ProgramInterface.ShaderStorageBlock, "jacobians_ssbo");
-                GL.ShaderStorageBlockBinding(ErrorVectors, jacobiansBlockIndex, 6);
+                int jacobiansBlockIndex = GL.GetProgramResourceIndex(Jacobians, ProgramInterface.ShaderStorageBlock, "jacobians_ssbo");
+                GL.ShaderStorageBlockBinding(Jacobians, jacobiansBlockIndex, 6);
                 GL.BindBufferBase(BufferRangeTarget.ShaderStorageBuffer, 6, jacobiansSSBO);
                 OpenTKException.ThrowIfErrors();
 
